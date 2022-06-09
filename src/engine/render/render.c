@@ -11,14 +11,13 @@ void render_init() {
 	global.render.height = 600;
 
     global.render.window = render_init_window(global.render.width, global.render.height);
+
     render_init_shaders(&state);
     render_init_color_texture(&state.texture_color);
     render_init_quad(&state.vao_quad, &state.vbo_quad, &state.ebo_quad);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
-
-    glViewport(0, 0, global.render.width, global.render.height);
 }
 
 void render_begin() {
@@ -36,7 +35,7 @@ void render_quad(vec2 pos, vec2 size, vec4 color) {
     mat4x4 model;
     mat4x4_identity(model);
 
-    mat4x4_translate(model, pos[0] + size[0] * 0.5, pos[1] + size[1] * 0.5, 0);
+    mat4x4_translate(model, pos[0], pos[1], 0);
     mat4x4_scale_aniso(model, model, size[0], size[1], 1);
 
     glUniformMatrix4fv(glGetUniformLocation(state.shader_default, "model"), 1, GL_FALSE, &model[0][0]);

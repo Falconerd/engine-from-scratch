@@ -49,7 +49,7 @@ void render_init_shaders(Render_State_Internal *state) {
 
     glUseProgram(state->shader_default);
     glUniformMatrix4fv(
-        glad_glGetUniformLocation(state->shader_default, "project"),
+        glGetUniformLocation(state->shader_default, "projection"),
         1,
         GL_FALSE,
         &state->projection[0][0]
@@ -73,10 +73,10 @@ void render_init_color_texture(u32 *texture) {
 void render_init_quad(u32 *vao, u32 *vbo, u32 *ebo) {
     //     x,    y, z, u, v
     f32 vertices[] = {
-         0.5,  0.5, 0, 1, 1,
-         0.5, -0.5, 0, 1, 0,
-        -0.5, -0.5, 0, 0, 0,
-        -0.5,  0.5, 0, 0, 1
+         0.5,  0.5, 0, 0, 0,
+         0.5, -0.5, 0, 0, 1,
+        -0.5, -0.5, 0, 1, 1,
+        -0.5,  0.5, 0, 1, 0
     };
     u32 indices[] = {
         0, 1, 3,
