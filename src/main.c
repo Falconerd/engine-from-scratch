@@ -8,8 +8,6 @@
 int main(int argc, char *argv[]) {
     render_init();
 
-    puts("Hello there!");
-
     bool should_quit = false;
 
     while (!should_quit) {
