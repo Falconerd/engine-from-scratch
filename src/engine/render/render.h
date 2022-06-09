@@ -1,7 +1,6 @@
 #ifndef RENDER_H
 #define RENDER_H
 
-#define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <linmath.h>
 
