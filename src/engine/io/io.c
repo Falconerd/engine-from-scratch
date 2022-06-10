@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include "io.h"
+#include "../util.h"
 
 char *io_file_read(const char *path) {
 	FILE *fp = fopen(path, "r");
 
 	if (!fp) {
-		printf("Cannot read file %s\n", path);
-		return NULL;
+		ERROR_RETURN(NULL, "Cannot read file %s\n", path);
 	}
 
 	fseek(fp, 0, SEEK_END);
@@ -14,16 +14,14 @@ char *io_file_read(const char *path) {
 	i32 length = ftell(fp);
 
 	if (length == -1L) {
-		printf("Could not assertain length of file %s\n", path);
-		return NULL;
+		ERROR_RETURN(NULL, "Could not assertain length of file %s\n", path);
 	}
 
 	fseek(fp, 0, SEEK_SET);
 
 	char *buffer = malloc((length + 1) * sizeof(char));
 	if (!buffer) {
-		printf("Cannot allocate file buffer for %s\n", path);
-		return NULL;
+		ERROR_RETURN(NULL, "Cannot allocate file buffer for %s\n", path);
 	}
 
 	fread(buffer, sizeof(char), length, fp);
@@ -38,8 +36,7 @@ char *io_file_read(const char *path) {
 int io_file_write(void *buffer, size_t size, const char *path) {
 	FILE *fp = fopen(path, "w");
 	if (!fp) {
-		printf("Cannot write file %s\n", path);
-		return 1;
+		ERROR_RETURN(1, "Cannot write file %s\n", path);
 	}
 
 	size_t chunks_written = fwrite(buffer, size, 1, fp);
@@ -47,8 +44,7 @@ int io_file_write(void *buffer, size_t size, const char *path) {
 	fclose(fp);
 
 	if (chunks_written != 1) {
-		printf("Incorrect chunks written. Expected 1, got %zu.\n", chunks_written);
-		return 1;
+		ERROR_RETURN(1, "Incorrect chunks written. Expected 1, got %zu.\n", chunks_written);
 	}
 
 	printf("File saved. %s\n", path);
