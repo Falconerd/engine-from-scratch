@@ -1,5 +1,4 @@
-#ifndef RENDER_H
-#define RENDER_H
+#pragma once
 
 #include <SDL2/SDL.h>
 #include <linmath.h>
@@ -16,6 +15,4 @@ void render_init(void);
 void render_begin(void);
 void render_end(void);
 void render_quad(vec2 pos, vec2 size, vec4 color);
-
-#endif
 

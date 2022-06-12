@@ -4,52 +4,53 @@
 #include "../util.h"
 #include "io.h"
 
-char *io_file_read(const char *path) {
-	FILE *fp = fopen(path, "r");
+File io_file_read(const char *path) {
+    File file = { .is_valid = false };
 
-	if (!fp) {
-    	ERROR_RETURN(NULL, "Cannot read file %s\n", path);
-	}
+    FILE *fp = fopen(path, "r");
 
-	fseek(fp, 0, SEEK_END);
+    if (!fp) {
+        ERROR_RETURN(file, "Cannot read file %s\n", path);
+    }
 
-	i32 length = ftell(fp);
+    fseek(fp, 0, SEEK_END);
 
-	if (length == -1L) {
-		ERROR_RETURN(NULL, "Could not assertain length of file %s\n", path);
-	}
+    file.len = ftell(fp);
 
-	fseek(fp, 0, SEEK_SET);
+    if (file.len == -1L) {
+        ERROR_RETURN(file, "Could not assertain length of file %s\n", path);
+    }
 
-	char *buffer = malloc((length + 1) * sizeof(char));
-	if (!buffer) {
-		ERROR_RETURN(NULL, "Cannot allocate file buffer for %s\n", path);
-	}
+    fseek(fp, 0, SEEK_SET);
 
-	fread(buffer, sizeof(char), length, fp);
-	buffer[length] = 0;
+    file.data = malloc((file.len + 1) * sizeof(char));
+    if (!file.data) {
+        ERROR_RETURN(file, "Cannot allocate file buffer for %s\n", path);
+    }
 
-	fclose(fp);
+    fread(file.data, sizeof(char), file.len, fp);
+    file.data[file.len] = 0;
 
-	printf("File loaded. %s\n", path);
-	return buffer;
+    fclose(fp);
+
+    return file;
 }
 
 int io_file_write(void *buffer, size_t size, const char *path) {
-	FILE *fp = fopen(path, "w");
-	if (!fp) {
-		ERROR_RETURN(1, "Cannot write file %s\n", path);
-	}
+    FILE *fp = fopen(path, "w");
+    if (!fp) {
+        ERROR_RETURN(1, "Cannot write file %s\n", path);
+    }
 
-	size_t chunks_written = fwrite(buffer, size, 1, fp);
+    size_t chunks_written = fwrite(buffer, size, 1, fp);
 
-	fclose(fp);
+    fclose(fp);
 
-	if (chunks_written != 1) {
-		ERROR_RETURN(1, "Incorrect chunks written. Expected 1, got %zu.\n", chunks_written);
-	}
+    if (chunks_written != 1) {
+        ERROR_RETURN(1, "Incorrect chunks written. Expected 1, got %zu.\n", chunks_written);
+    }
 
-	printf("File saved. %s\n", path);
-	return 0;
+    printf("File saved. %s\n", path);
+    return 0;
 }
 
