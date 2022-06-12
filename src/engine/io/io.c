@@ -8,7 +8,6 @@ File io_file_read(const char *path) {
     File file = { .is_valid = false };
 
     FILE *fp = fopen(path, "r");
-
     if (!fp) {
         ERROR_RETURN(file, "Cannot read file %s\n", path);
     }
@@ -16,7 +15,6 @@ File io_file_read(const char *path) {
     fseek(fp, 0, SEEK_END);
 
     file.len = ftell(fp);
-
     if (file.len == -1L) {
         ERROR_RETURN(file, "Could not assertain length of file %s\n", path);
     }
