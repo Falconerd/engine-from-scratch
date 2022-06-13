@@ -1,54 +1,73 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include "../types.h"
 #include "../util.h"
 #include "io.h"
 
+// 20 MiB, can probably change this to higher without issue. Check your target platform.
+#define IO_READ_CHUNK_SIZE 2097152
+#define IO_READ_ERROR_GENERAL "Error reading file: %s. errno: %d\n"
+#define IO_READ_ERROR_MEMORY "Not enough free memeory to read file: %s\n"
+
+// Adapted from https://stackoverflow.com/a/44894946 (not the chosen answer) by Nominal Animal
 File io_file_read(const char *path) {
     File file = { .is_valid = false };
 
-    FILE *fp = fopen(path, "r");
-    if (!fp) {
-        ERROR_RETURN(file, "Cannot read file %s\n", path);
+    FILE *fp = fopen(path, "rb");
+    if (ferror(fp)) {
+        ERROR_RETURN(file, IO_READ_ERROR_GENERAL, path, errno);
     }
 
-    fseek(fp, 0, SEEK_END);
+    char *data = NULL;
+    char *tmp;
+    size_t used = 0;
+    size_t size = 0;
+    size_t n;
 
-    file.len = ftell(fp);
-    if (file.len == -1L) {
-        ERROR_RETURN(file, "Could not assertain length of file %s\n", path);
+    while (true) {
+        if (used + IO_READ_CHUNK_SIZE + 1 > size) {
+            size = used + IO_READ_CHUNK_SIZE + 1;
+
+            if (size <= used) {
+                free(data);
+                ERROR_RETURN(file, "Input file too large: %s\n", path);
+            }
+
+            tmp = realloc(data, size);
+            if (!tmp) {
+                free(data);
+                ERROR_RETURN(file, IO_READ_ERROR_MEMORY, path);
+            }
+            data = tmp;
+        }
+
+        n = fread(data + used, 1, IO_READ_CHUNK_SIZE, fp);
+        if (n == 0)
+            break;
+
+        used += n;
     }
 
-    fseek(fp, 0, SEEK_SET);
-
-    file.data = malloc((file.len + 1) * sizeof(char));
-    if (!file.data) {
-        ERROR_RETURN(file, "Cannot allocate file buffer for %s\n", path);
+    if (ferror(fp)) {
+        free(data);
+        ERROR_RETURN(file, IO_READ_ERROR_GENERAL, path, errno);
     }
 
-    fread(file.data, sizeof(char), file.len, fp);
-    file.data[file.len] = 0;
+    tmp = realloc(data, used + 1);
+    if (!tmp) {
+        free(data);
+        ERROR_RETURN(file, IO_READ_ERROR_MEMORY, path);
+    }
+    data = tmp;
+    data[used] = 0;
 
-    fclose(fp);
+    file.data = data;
+    file.len = used;
+    file.is_valid = true;
 
     return file;
 }
 
-int io_file_write(void *buffer, size_t size, const char *path) {
-    FILE *fp = fopen(path, "w");
-    if (!fp) {
-        ERROR_RETURN(1, "Cannot write file %s\n", path);
-    }
-
-    size_t chunks_written = fwrite(buffer, size, 1, fp);
-
-    fclose(fp);
-
-    if (chunks_written != 1) {
-        ERROR_RETURN(1, "Incorrect chunks written. Expected 1, got %zu.\n", chunks_written);
-    }
-
-    printf("File saved. %s\n", path);
-    return 0;
-}
+int io_file_write(void *buffer, size_t size, const char *path);
 
