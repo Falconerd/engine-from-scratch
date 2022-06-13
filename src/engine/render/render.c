@@ -11,12 +11,9 @@ void render_init(void) {
     global.render.height = 600;
     global.render.window = render_init_window(global.render.width, global.render.height);
 
+    render_init_shaders(&state);
     render_init_quad(&state.vao_quad, &state.vbo_quad, &state.ebo_quad);
     render_init_color_texture(&state.texture_color);
-    render_init_shaders(&state);
-
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
 }
 
 void render_begin(void) {
@@ -42,8 +39,7 @@ void render_quad(vec2 pos, vec2 size, vec4 color) {
 
     glBindVertexArray(state.vao_quad);
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glBindTexture(GL_TEXTURE_2D, state.texture_color);
+    glBindTexture(GL_TEXTURE_2D, state.texture_color);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
 
     glBindVertexArray(0);
