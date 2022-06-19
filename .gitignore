@@ -5,3 +5,6 @@
 *.obj
 *.o
 *.out
+.vs/
+compile_flags.txt
+config.ini
