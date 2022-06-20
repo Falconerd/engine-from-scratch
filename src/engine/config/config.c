@@ -4,9 +4,9 @@
 
 static const char *CONFIG_DEFAULT =
 	"[controls]\n"
-	"left = R\n"
-	"right = T\n"
-	"up = F\n"
+	"left = A\n"
+	"right = D\n"
+	"up = W\n"
 	"down = S\n"
 	"escape = Escape\n"
 	"\n";
@@ -28,7 +28,7 @@ static char *config_get_value(const char *config_buffer, const char *value) {
 	// Move pointer to '='.
 	while (*curr != '=' && curr != end)
 		++curr;
-	// Consumue '='.
+	// Consume '='.
 	++curr;
 	// Consume any spaces.
 	while (*curr == ' ')
@@ -63,12 +63,13 @@ static int config_load(void) {
 }
 
 void config_init(void) {
-	if (config_load() != 0) {
-		io_file_write(CONFIG_DEFAULT,
-				strlen(CONFIG_DEFAULT),
-				"./config.ini");
-		config_init();
-	}
+	if (config_load() == 0)
+		return;
+
+	io_file_write((void*)CONFIG_DEFAULT, strlen(CONFIG_DEFAULT), "./config.ini");
+
+	if (config_load() != 0)
+		ERROR_EXIT("Could not create or load config file.\n");
 }
 
 void config_key_bind(Input_Key key, const char *key_name) {

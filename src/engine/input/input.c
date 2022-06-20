@@ -2,7 +2,7 @@
 #include "../global.h"
 #include "../types.h"
 
-void update_key_state(u8 current_state, Key_State *key_state)
+static void update_key_state(u8 current_state, Key_State *key_state)
 {
 	if (current_state) {
 		if (*key_state > 0)
