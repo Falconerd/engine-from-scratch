@@ -13,10 +13,10 @@ void time_update(void) {
 	global.time.last = global.time.now;
 	++global.time.frame_count;
 
-	if (global.time.now - global.time.last >= 1000.f) {
+	if (global.time.now - global.time.frame_last >= 1000.f) {
 		global.time.frame_rate = global.time.frame_count;
 		global.time.frame_count = 0;
-		global.time.last = global.time.now;
+		global.time.frame_last = global.time.now;
 	}
 }
 
