@@ -2,7 +2,7 @@
 #include "../io.h"
 #include "../util.h"
 
-static char *CONFIG_DEFAULT =
+static const char *CONFIG_DEFAULT =
 	"[controls]\n"
 	"left = R\n"
 	"right = T\n"

@@ -71,7 +71,7 @@ File io_file_read(const char *path) {
 	return file;
 }
 
-int io_file_write(void *buffer, size_t size, const char *path) {
+int io_file_write(const void *buffer, size_t size, const char *path) {
 	FILE *fp = fopen(path, "wb");
 	if (!fp)
 		ERROR_RETURN(1, "Cannot write file: %s.\n", path);
