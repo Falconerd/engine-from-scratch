@@ -4,7 +4,7 @@
 #include <string.h>
 
 Array_List *array_list_create(usize item_size, usize initial_capacity) {
-    Array_List *list = calloc(1, sizeof(Array_List));
+    Array_List *list = malloc(sizeof(Array_List));
 
     if (!list)
 	    ERROR_RETURN(NULL, "Could not allocate memory for array list\n");
@@ -12,7 +12,7 @@ Array_List *array_list_create(usize item_size, usize initial_capacity) {
     list->item_size = item_size;
     list->capacity = initial_capacity;
     list->len = 0;
-    list->items = calloc(initial_capacity, item_size);
+    list->items = malloc(initial_capacity * item_size);
 
     if (!list->items)
 	    ERROR_RETURN(NULL, "Could not allocate memory for array list items\n");
@@ -45,15 +45,15 @@ void *array_list_get(Array_List *list, usize index) {
 	return (u8*)list->items + index * list->item_size;
 }
 
-void array_list_remove(Array_List *list, usize index) {
+u8 array_list_remove(Array_List *list, usize index) {
 	if (list->len == 0)
-		ERROR_RETURN(, "List is empty\n");
+		ERROR_RETURN(1, "List is empty\n");
 	if (index >= list->len)
-		ERROR_RETURN(, "Index out of bounds\n");
+		ERROR_RETURN(1, "Index out of bounds\n");
 
 	if (list->len == 1) {
 		list->len = 0;
-		return;
+		return 0;
 	}
 
 	--list->len;
@@ -61,5 +61,7 @@ void array_list_remove(Array_List *list, usize index) {
 	u8 *item_ptr = (u8*)list->items + (index * list->item_size);
 	u8 *end_ptr = (u8*)list->items + (list->len * list->item_size);
 	memcpy(item_ptr, end_ptr, list->item_size);
+
+	return 0;
 }
 
