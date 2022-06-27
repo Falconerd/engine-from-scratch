@@ -21,8 +21,6 @@ Array_List *array_list_create(usize item_size, usize initial_capacity) {
 }
 
 usize array_list_append(Array_List *list, void *item) {
-	usize index = list->len;
-
 	if (list->len == list->capacity) {
 		list->capacity = list->capacity > 0 ? list->capacity * 2 : 1;
 		void *items = realloc(list->items, list->item_size * list->capacity);
@@ -33,7 +31,7 @@ usize array_list_append(Array_List *list, void *item) {
 		list->items = items;
 	}
 
-	list->len++;
+	usize index = list->len++;
 
 	memcpy((u8*)list->items + index * list->item_size, item, list->item_size);
 
