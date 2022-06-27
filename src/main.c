@@ -8,6 +8,7 @@
 #include "engine/config.h"
 #include "engine/input.h"
 #include "engine/time.h"
+#include "engine/physics.h"
 
 static bool should_quit = false;
 static vec2 pos;
@@ -29,6 +30,12 @@ int main(int argc, char *argv[]) {
 	time_init(60);
 	config_init();
 	render_init();
+	physics_init();
+
+	usize body_index = physics_body_create(pos, (vec2){ 100, 100 });
+	Body *body = physics_body_get(body_index);
+	body->acceleration[0] = 100;
+	body->acceleration[1] = 25;
 
 	pos[0] = global.render.width * 0.5;
 	pos[1] = global.render.height * 0.5;
@@ -50,10 +57,12 @@ int main(int argc, char *argv[]) {
 
 		input_update();
 		input_handle();
+		physics_update();
 
 		render_begin();
 
-		render_quad(pos, (vec2){50, 50}, (vec4){0, 1, 0, 1});
+		render_quad(pos, (vec2){ 50, 50 }, (vec4){ 0, 1, 0, 1 });
+		render_quad(body->aabb.position, (vec2){ 50, 50 }, (vec4){ 1, 0, 0, 1 });
 
 		render_end();
 		time_update_late();

@@ -23,9 +23,9 @@ File io_file_read(const char *path) {
 
 	char *data = NULL;
 	char *tmp;
-	size_t used = 0;
-	size_t size = 0;
-	size_t n;
+	usize used = 0;
+	usize size = 0;
+	usize n;
 
 	while (true) {
 		if (used + IO_READ_CHUNK_SIZE + 1 > size) {
@@ -71,12 +71,12 @@ File io_file_read(const char *path) {
 	return file;
 }
 
-int io_file_write(void *buffer, size_t size, const char *path) {
+int io_file_write(void *buffer, usize size, const char *path) {
 	FILE *fp = fopen(path, "wb");
 	if (!fp || ferror(fp))
 		ERROR_RETURN(1, "Cannot write file: %s.\n", path);
 
-	size_t chunks_written = fwrite(buffer, size, 1, fp);
+	usize chunks_written = fwrite(buffer, size, 1, fp);
 
 	fclose(fp);
 

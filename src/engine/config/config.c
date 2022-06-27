@@ -21,7 +21,7 @@ static char *config_get_value(const char *config_buffer, const char *value) {
 		ERROR_EXIT("Could not find config value: %s. "
 				"Try deleting config.ini and restarting.\n", value);
 
-	size_t len = strlen(line);
+	usize len = strlen(line);
 	char *end = line + len;
 
 	char *curr = line;
