@@ -2,6 +2,7 @@
 
 #include "../global.h"
 #include "../array_list.h"
+#include "../util.h"
 #include "../physics.h"
 #include "physics_internal.h"
 
@@ -32,7 +33,8 @@ usize physics_body_create(vec2 position, vec2 size) {
 		.velocity = { 0, 0 }
 	};
 
-	array_list_append(state.body_list, &body);
+	if (array_list_append(state.body_list, &body) == (usize)-1)
+		ERROR_EXIT("Could not append body to list\n");
 
 	return state.body_list->len - 1;
 }
