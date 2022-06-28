@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <glad/glad.h>
 #define SDL_MAIN_HANDLED
@@ -32,10 +33,16 @@ int main(int argc, char *argv[]) {
 	render_init();
 	physics_init();
 
-	usize body_index = physics_body_create(pos, (vec2){ 100, 100 });
-	Body *body = physics_body_get(body_index);
-	body->acceleration[0] = 100;
-	body->acceleration[1] = 25;
+	u32 body_count = 100;
+
+	for (u32 i = 0; i < body_count; i++) {
+		usize body_index = physics_body_create(
+			(vec2){ rand() % (int)global.render.width, rand() % (int)global.render.height },
+			(vec2){ rand() % 100, rand() % 100 });
+		Body *body = physics_body_get(body_index);
+		body->acceleration[0] = rand() % 200 - 100;
+		body->acceleration[1] = rand() % 200 - 100;
+	}
 
 	pos[0] = global.render.width * 0.5;
 	pos[1] = global.render.height * 0.5;
@@ -62,7 +69,29 @@ int main(int argc, char *argv[]) {
 		render_begin();
 
 		render_quad(pos, (vec2){ 50, 50 }, (vec4){ 0, 1, 0, 1 });
-		render_quad(body->aabb.position, (vec2){ 50, 50 }, (vec4){ 1, 0, 0, 1 });
+
+		for (u32 i = 0; i < body_count; i++) {
+			Body *body = physics_body_get(i);
+			render_quad(body->aabb.position, (vec2){ 10, 10 }, (vec4){ 1, 0, 0, 1 });
+
+			if (body->aabb.position[0] > global.render.width)
+				body->aabb.position[0] = 0;
+			if (body->aabb.position[1] > global.render.height)
+				body->aabb.position[1] = 0;
+			if (body->aabb.position[0] < 0)
+				body->aabb.position[0] = global.render.width;
+			if (body->aabb.position[1] < 0)
+				body->aabb.position[1] = global.render.height;
+
+			if (body->velocity[0] > 500)
+				body->velocity[0] = 500;
+			if (body->velocity[0] < -500)
+				body->velocity[0] = -500;
+			if (body->velocity[1] > 500)
+				body->velocity[1] = 500;
+			if (body->velocity[1] < -500)
+				body->velocity[1] = -500;
+		}
 
 		render_end();
 		time_update_late();
