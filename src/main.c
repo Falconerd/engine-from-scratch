@@ -74,14 +74,10 @@ int main(int argc, char *argv[]) {
 			Body *body = physics_body_get(i);
 			render_quad(body->aabb.position, (vec2){ 10, 10 }, (vec4){ 1, 0, 0, 1 });
 
-			if (body->aabb.position[0] > global.render.width)
-				body->aabb.position[0] = 0;
-			if (body->aabb.position[1] > global.render.height)
-				body->aabb.position[1] = 0;
-			if (body->aabb.position[0] < 0)
-				body->aabb.position[0] = global.render.width;
-			if (body->aabb.position[1] < 0)
-				body->aabb.position[1] = global.render.height;
+			if (body->aabb.position[0] > global.render.width || body->aabb.position[0] < 0)
+				body->velocity[0] = -body->velocity[0];
+			if (body->aabb.position[1] > global.render.height || body->aabb.position[1] < 0)
+				body->velocity[1] = -body->velocity[1];
 
 			if (body->velocity[0] > 500)
 				body->velocity[0] = 500;
