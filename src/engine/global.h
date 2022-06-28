@@ -4,7 +4,6 @@
 #include "config.h"
 #include "input.h"
 #include "time.h"
-#include "physics.h"
 
 typedef struct global {
 	Render_State render;
