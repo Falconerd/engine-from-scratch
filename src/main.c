@@ -40,10 +40,8 @@ int main(int argc, char *argv[]) {
 		.position = {global.render.width * 0.5, global.render.height * 0.5},
 		.half_size = {50, 50},
 	};
-
-	AABB cursor_aabb = {
-		.half_size = {50, 50}
-	};
+	AABB cursor_aabb = {.half_size = {50, 50}};
+	AABB start_aabb = {.half_size = {50, 50}};
 
 	while (!should_quit) {
 		time_update();
@@ -54,6 +52,12 @@ int main(int argc, char *argv[]) {
 			switch (event.type) {
 			case SDL_QUIT:
 				should_quit = true;
+				break;
+			case SDL_MOUSEBUTTONDOWN:
+				if (event.button.button == SDL_BUTTON_LEFT) {
+					start_aabb.position[0] = pos[0];
+					start_aabb.position[1] = pos[1];
+				}
 				break;
 			default:
 				break;
@@ -91,6 +95,12 @@ int main(int argc, char *argv[]) {
 		} else {
 			render_aabb((f32*)&cursor_aabb, WHITE);
 		}
+
+		render_aabb((f32*)&start_aabb, GREEN);
+		render_line_segment(
+			start_aabb.position,
+			cursor_aabb.position,
+			(vec4){1, 1, 1, 0.5});
 
 		render_end();
 		time_update_late();
