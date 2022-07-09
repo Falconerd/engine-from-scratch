@@ -20,9 +20,10 @@ problem X.
 
 ## Current feature list
 
-Everything on this list will be implemented in
-the video series, and exists in one form or
-another in [this codebase](https://github.com/Falconerd/games-from-scratch).
+Everything on this list will be or has been
+implemented in the video series, and exists in
+one form or another in
+[this codebase](https://github.com/Falconerd/games-from-scratch).
 
 - Simple sprite rendering with OpenGL.
 - Simple physics integration.
