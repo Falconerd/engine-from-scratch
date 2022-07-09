@@ -41,6 +41,10 @@ int main(int argc, char *argv[]) {
 		.half_size = {50, 50},
 	};
 
+	AABB cursor_aabb = {
+		.half_size = {50, 50}
+	};
+
 	while (!should_quit) {
 		time_update();
 
@@ -62,12 +66,31 @@ int main(int argc, char *argv[]) {
 
 		render_begin();
 
+		cursor_aabb.position[0] = pos[0];
+		cursor_aabb.position[1] = pos[1];
+
 		render_aabb((f32*)&test_aabb, (vec4){1, 1, 1, 0.5});
 
+		// Point
 		if (physics_point_intersect_aabb(pos, test_aabb))
 			render_quad(pos, (vec2){5, 5}, RED);
 		else
 			render_quad(pos, (vec2){5, 5}, WHITE);
+
+		// AABB
+		AABB minkowski_difference = aabb_minkowski_difference(test_aabb, cursor_aabb);
+		render_aabb((f32*)&minkowski_difference, YELLOW);
+
+		vec2 pv;
+		aabb_penetration_vector(pv, minkowski_difference);
+		vec2_add(pv, pos, pv);
+		render_line_segment(pos, pv, GREEN);
+
+		if (physics_aabb_intersect_aabb(test_aabb, cursor_aabb)) {
+			render_aabb((f32*)&cursor_aabb, RED);
+		} else {
+			render_aabb((f32*)&cursor_aabb, WHITE);
+		}
 
 		render_end();
 		time_update_late();
