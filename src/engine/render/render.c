@@ -15,6 +15,9 @@ void render_init(void) {
 	render_init_line(&state.vao_line, &state.vbo_line);
 	render_init_shaders(&state);
 	render_init_color_texture(&state.texture_color);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void render_begin(void) {
@@ -54,9 +57,6 @@ void render_line_segment(vec2 start, vec2 end, vec4 color) {
 
 	mat4x4 model;
 	mat4x4_translate(model, start[0], start[1], 0);
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glUniformMatrix4fv(glGetUniformLocation(state.shader_default, "model"), 1, GL_FALSE, &model[0][0]);
 	glUniform4fv(glGetUniformLocation(state.shader_default, "color"), 1, color);
