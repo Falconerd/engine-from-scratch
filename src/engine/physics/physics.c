@@ -7,6 +7,20 @@
 
 static Physics_State_Internal state;
 
+void aabb_min_max(vec2 min, vec2 max, AABB aabb) {
+	vec2_sub(min, aabb.position, aabb.half_size);
+	vec2_add(max, aabb.position, aabb.half_size);
+}
+
+bool physics_point_intersect_aabb(vec2 point, AABB aabb) {
+	vec2 min, max;
+	aabb_min_max(min, max, aabb);
+	return  point[0] >= min[0] &&
+		point[0] <= max[0] &&
+		point[1] >= min[1] &&
+		point[1] <= max[1];
+}
+
 void physics_init(void) {
 	state.body_list = array_list_create(sizeof(Body), 0);
 }
