@@ -15,6 +15,9 @@ void render_init(void) {
 	render_init_line(&state.vao_line, &state.vbo_line);
 	render_init_shaders(&state);
 	render_init_color_texture(&state.texture_color);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void render_begin(void) {

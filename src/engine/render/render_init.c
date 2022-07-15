@@ -117,4 +117,3 @@ void render_init_line(u32 *vao, u32 *vbo) {
 
 	glBindVertexArray(0);
 }
-
