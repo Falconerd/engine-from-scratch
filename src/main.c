@@ -45,6 +45,10 @@ int main(int argc, char *argv[]) {
 		.half_size = {75, 75}
 	};
 
+	AABB start_aabb = {
+		.half_size = {75, 75}
+	};
+
 	AABB sum_aabb = {
 		.position = {test_aabb.position[0], test_aabb.position[1]},
 		.half_size = {
@@ -62,6 +66,12 @@ int main(int argc, char *argv[]) {
 			switch (event.type) {
 			case SDL_QUIT:
 				should_quit = true;
+				break;
+			case SDL_MOUSEBUTTONDOWN:
+				if (event.button.button == SDL_BUTTON_LEFT) {
+					start_aabb.position[0] = pos[0];
+					start_aabb.position[1] = pos[1];
+				}
 				break;
 			default:
 				break;
@@ -107,6 +117,8 @@ int main(int argc, char *argv[]) {
 			render_aabb((f32*)&cursor_aabb, WHITE);
 		}
 
+		render_aabb((f32*)&start_aabb, (vec4){1, 1, 1, 0.5});
+		render_line_segment(start_aabb.position, cursor_aabb.position, WHITE);
 
 		render_end();
 		time_update_late();
