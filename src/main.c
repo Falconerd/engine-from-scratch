@@ -41,6 +41,17 @@ int main(int argc, char *argv[]) {
 		.half_size = {50, 50}
 	};
 
+	AABB cursor_aabb = {.half_size = {75, 75}};
+
+	AABB start_aabb = {.half_size = {75, 75}};
+
+	AABB sum_aabb = {
+		.position = {test_aabb.position[0], test_aabb.position[1]},
+		.half_size = {
+			test_aabb.half_size[0] + cursor_aabb.half_size[0],
+			test_aabb.half_size[1] + cursor_aabb.half_size[1]}
+	};
+
 	while (!should_quit) {
 		time_update();
 
@@ -50,6 +61,12 @@ int main(int argc, char *argv[]) {
 			switch (event.type) {
 			case SDL_QUIT:
 				should_quit = true;
+				break;
+			case SDL_MOUSEBUTTONDOWN:
+				if (event.button.button == SDL_BUTTON_LEFT) {
+					start_aabb.position[0] = pos[0];
+					start_aabb.position[1] = pos[1];
+				}
 				break;
 			default:
 				break;
@@ -62,7 +79,35 @@ int main(int argc, char *argv[]) {
 
 		render_begin();
 
-		render_aabb((f32*)&test_aabb, (vec4){1, 1, 1, 0.5});
+		cursor_aabb.position[0] = pos[0];
+		cursor_aabb.position[1] = pos[1];
+
+		render_aabb((f32*)&test_aabb, WHITE);
+
+		render_aabb((f32*)&sum_aabb, (vec4){1, 1, 1, 0.5});
+
+		AABB minkowski_difference = aabb_minkowski_difference(test_aabb, cursor_aabb);
+		render_aabb((f32*)&minkowski_difference, ORANGE);
+
+		vec2 pv;
+		aabb_penetration_vector(pv, minkowski_difference);
+
+		AABB collision_aabb = cursor_aabb;
+		collision_aabb.position[0] += pv[0];
+		collision_aabb.position[1] += pv[1];
+
+		if (physics_aabb_intersect_aabb(test_aabb, cursor_aabb)) {
+			render_aabb((f32*)&cursor_aabb, RED);
+			render_aabb((f32*)&collision_aabb, CYAN);
+
+			vec2_add(pv, pos, pv);
+			render_line_segment(pos, pv, CYAN);
+		} else {
+			render_aabb((f32*)&cursor_aabb, WHITE);
+		}
+
+		render_aabb((f32*)&start_aabb, (vec4){1, 1, 1, 0.5});
+		render_line_segment(start_aabb.position, pos, WHITE);
 
 		if (physics_point_intersect_aabb(pos, test_aabb))
 			render_quad(pos, (vec2){5, 5}, RED);

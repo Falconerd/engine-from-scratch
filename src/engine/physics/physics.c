@@ -12,6 +12,46 @@ void aabb_min_max(vec2 min, vec2 max, AABB aabb) {
 	vec2_add(max, aabb.position, aabb.half_size);
 }
 
+AABB aabb_minkowski_difference(AABB a, AABB b) {
+	AABB result;
+	vec2_sub(result.position, a.position, b.position);
+	vec2_add(result.half_size, a.half_size, b.half_size);
+
+	return result;
+}
+
+bool physics_aabb_intersect_aabb(AABB a, AABB b) {
+	vec2 min, max;
+	aabb_min_max(min, max, aabb_minkowski_difference(a, b));
+
+	return (min[0] <= 0 && max[0] >= 0 && min[1] <= 0 && max[1] >= 0);
+}
+
+void aabb_penetration_vector(vec2 r, AABB aabb) {
+	vec2 min, max;
+	aabb_min_max(min, max, aabb);
+
+	f32 min_dist = fabsf(min[0]);
+	r[0] = min[0];
+	r[1] = 0;
+
+	if (fabsf(max[0]) < min_dist) {
+		min_dist = fabsf(max[0]);
+		r[0] = max[0];
+	}
+
+	if (fabsf(min[1]) < min_dist) {
+		min_dist = fabsf(min[1]);
+		r[0] = 0;
+		r[1] = min[1];
+	}
+
+	if (fabsf(max[1]) < min_dist) {
+		r[0] = 0;
+		r[1] = max[1];
+	}
+}
+
 bool physics_point_intersect_aabb(vec2 point, AABB aabb) {
 	vec2 min, max;
 	aabb_min_max(min, max, aabb);
