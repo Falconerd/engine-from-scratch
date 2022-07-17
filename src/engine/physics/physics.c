@@ -37,9 +37,9 @@ bool physics_aabb_intersect_aabb(AABB a, AABB b) {
 	return (min[0] <= 0 && max[0] >= 0 && min[1] <= 0 && max[1] >= 0);
 }
 
-void aabb_penetration_vector(vec2 r, AABB minkowski_difference_aabb) {
+void aabb_penetration_vector(vec2 r, AABB aabb) {
 	vec2 min, max;
-	aabb_min_max(min, max, minkowski_difference_aabb);
+	aabb_min_max(min, max, aabb);
 
 	f32 min_dist = fabsf(min[0]);
 	r[0] = min[0];
