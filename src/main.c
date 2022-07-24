@@ -84,35 +84,59 @@ int main(int argc, char *argv[]) {
 
 		render_aabb((f32*)&test_aabb, WHITE);
 
-		render_aabb((f32*)&sum_aabb, (vec4){1, 1, 1, 0.5});
-
-		AABB minkowski_difference = aabb_minkowski_difference(test_aabb, cursor_aabb);
-		render_aabb((f32*)&minkowski_difference, ORANGE);
-
-		vec2 pv;
-		aabb_penetration_vector(pv, minkowski_difference);
-
-		AABB collision_aabb = cursor_aabb;
-		collision_aabb.position[0] += pv[0];
-		collision_aabb.position[1] += pv[1];
-
 		if (physics_aabb_intersect_aabb(test_aabb, cursor_aabb)) {
 			render_aabb((f32*)&cursor_aabb, RED);
-			render_aabb((f32*)&collision_aabb, CYAN);
-
-			vec2_add(pv, pos, pv);
-			render_line_segment(pos, pv, CYAN);
 		} else {
 			render_aabb((f32*)&cursor_aabb, WHITE);
 		}
 
 		render_aabb((f32*)&start_aabb, (vec4){1, 1, 1, 0.5});
-		render_line_segment(start_aabb.position, pos, WHITE);
+		render_line_segment(start_aabb.position, pos, (vec4){1, 1, 1, 0.5});
 
-		if (physics_point_intersect_aabb(pos, test_aabb))
-			render_quad(pos, (vec2){5, 5}, RED);
-		else
-			render_quad(pos, (vec2){5, 5}, WHITE);
+		vec2 magnitude;
+		vec2_sub(magnitude, pos, start_aabb.position);
+		Hit hit = ray_intersect_aabb(start_aabb.position, magnitude, sum_aabb); 
+
+		if (hit.hit) {
+			AABB hit_aabb = {
+				.position = {hit.position[0], hit.position[1]},
+				.half_size = {start_aabb.half_size[0], start_aabb.half_size[1]}
+			};
+			render_aabb((f32*)&hit_aabb, CYAN);
+			render_quad(hit.position, (vec2){5, 5}, CYAN);
+		}
+
+		render_line_segment((vec2){sum_aabb.position[0] - sum_aabb.half_size[0], 0},
+				(vec2){sum_aabb.position[0] - sum_aabb.half_size[0], global.render.height},
+				(vec4){1, 1, 1, 0.2});
+		render_line_segment((vec2){sum_aabb.position[0] + sum_aabb.half_size[0], 0},
+				(vec2){sum_aabb.position[0] + sum_aabb.half_size[0], global.render.height},
+				(vec4){1, 1, 1, 0.2});
+		render_line_segment((vec2){0, sum_aabb.position[1] - sum_aabb.half_size[1]},
+				(vec2){global.render.width, sum_aabb.position[1] - sum_aabb.half_size[1]},
+				(vec4){1, 1, 1, 0.2});
+		render_line_segment((vec2){0, sum_aabb.position[1] + sum_aabb.half_size[1]},
+				(vec2){global.render.width, sum_aabb.position[1] + sum_aabb.half_size[1]},
+				(vec4){1, 1, 1, 0.2});
+
+		vec2 min, max;
+		aabb_min_max(min, max, sum_aabb);
+
+		for (u8 i = 0; i < 2; ++i) {
+			if (magnitude[i] != 0) {
+				f32 t1 = (min[i] - pos[i]) / magnitude[i];
+				f32 t2 = (max[i] - pos[i]) / magnitude[i];
+
+				vec2 x;
+				vec2_scale(x, magnitude, t1);
+				vec2_add(x, x, pos);
+				render_quad(x, (vec2){5, 5}, ORANGE);
+
+				vec2_scale(x, magnitude, t2);
+				vec2_add(x, x, pos);
+				render_quad(x, (vec2){5, 5}, CYAN);
+			}
+		}
 
 		render_end();
 		time_update_late();

@@ -61,6 +61,49 @@ bool physics_point_intersect_aabb(vec2 point, AABB aabb) {
 		point[1] <= max[1];
 }
 
+Hit ray_intersect_aabb(vec2 position, vec2 magnitude, AABB aabb) {
+	Hit hit = {0};
+	vec2 min, max;
+	aabb_min_max(min, max, aabb);
+
+	f32 last_entry = -INFINITY, first_exit = INFINITY;
+
+	// The naive slab test.
+	for (u8 i = 0; i < 2; ++i) {
+		if (magnitude[i] != 0) {
+			f32 t1 = (min[i] - position[i]) / magnitude[i];
+			f32 t2 = (max[i] - position[i]) / magnitude[i];
+
+			last_entry = fmaxf(last_entry, fminf(t1, t2));
+			first_exit = fminf(first_exit , fmaxf(t1, t2));
+		} else if (position[i] <= min[i] || position[i] >= max[i]) {
+			return hit;
+		}
+	}
+
+	// Get the position of the hit.
+	hit.position[0] = position[0] + magnitude[0] * last_entry;
+	hit.position[1] = position[1] + magnitude[1] * last_entry;
+
+	// Calculate the normals.
+	f32 dx = hit.position[0] - aabb.position[0];
+	f32 px = aabb.half_size[0] - fabsf(dx);
+	f32 dy = hit.position[1] - aabb.position[1];
+	f32 py = aabb.half_size[1] - fabsf(dy);
+
+	if (px < py)
+		hit.normal[0] = fsignf(dx);
+	else
+		hit.normal[1] = fsignf(dy);
+
+	if (first_exit > last_entry && first_exit > 0 && last_entry < 1) {
+		hit.hit = true;
+		hit.time = last_entry;
+	}
+
+	return hit;
+}
+
 void physics_init(void) {
 	state.body_list = array_list_create(sizeof(Body), 0);
 }
@@ -95,5 +138,4 @@ usize physics_body_create(vec2 position, vec2 size) {
 Body *physics_body_get(usize index) {
 	return array_list_get(state.body_list, index);
 }
-
 

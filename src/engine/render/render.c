@@ -7,8 +7,8 @@
 static Render_State_Internal state = {0};
 
 void render_init(void) {
-	global.render.width = 800;
-	global.render.height = 600;
+	global.render.width = 1600;
+	global.render.height = 900;
 	global.render.window = render_init_window(global.render.width, global.render.height);
 
 	render_init_quad(&state.vao_quad, &state.vbo_quad, &state.ebo_quad);

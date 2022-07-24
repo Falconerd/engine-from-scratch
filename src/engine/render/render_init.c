@@ -20,8 +20,8 @@ SDL_Window *render_init_window(u32 width, u32 height) {
 		"MyGame",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
-		800,
-		600,
+		global.render.width,
+		global.render.height,
 		SDL_WINDOW_OPENGL
 	);
 
