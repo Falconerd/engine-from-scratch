@@ -106,18 +106,15 @@ int main(int argc, char *argv[]) {
 			render_quad(hit.position, (vec2){5, 5}, CYAN);
 		}
 
-		render_line_segment((vec2){sum_aabb.position[0] - sum_aabb.half_size[0], 0},
-				(vec2){sum_aabb.position[0] - sum_aabb.half_size[0], global.render.height},
-				(vec4){1, 1, 1, 0.2});
-		render_line_segment((vec2){sum_aabb.position[0] + sum_aabb.half_size[0], 0},
-				(vec2){sum_aabb.position[0] + sum_aabb.half_size[0], global.render.height},
-				(vec4){1, 1, 1, 0.2});
-		render_line_segment((vec2){0, sum_aabb.position[1] - sum_aabb.half_size[1]},
-				(vec2){global.render.width, sum_aabb.position[1] - sum_aabb.half_size[1]},
-				(vec4){1, 1, 1, 0.2});
-		render_line_segment((vec2){0, sum_aabb.position[1] + sum_aabb.half_size[1]},
-				(vec2){global.render.width, sum_aabb.position[1] + sum_aabb.half_size[1]},
-				(vec4){1, 1, 1, 0.2});
+		f32 x = sum_aabb.position[0];
+		f32 y = sum_aabb.position[1];
+		f32 size = sum_aabb.half_size[0];
+		vec4 faded = {1, 1, 1, 0.2};
+
+		render_line_segment((vec2){x - size, 0}, (vec2){x - size, global.render.height}, faded);
+		render_line_segment((vec2){x + size, 0}, (vec2){x + size, global.render.height}, faded);
+		render_line_segment((vec2){0, y - size}, (vec2){global.render.width, y - size}, faded);
+		render_line_segment((vec2){0, y + size}, (vec2){global.render.width, y + size}, faded);
 
 		vec2 min, max;
 		aabb_min_max(min, max, sum_aabb);
