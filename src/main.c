@@ -90,8 +90,10 @@ int main(int argc, char *argv[]) {
 			render_aabb((f32*)&cursor_aabb, WHITE);
 		}
 
-		render_aabb((f32*)&start_aabb, (vec4){1, 1, 1, 0.5});
-		render_line_segment(start_aabb.position, pos, (vec4){1, 1, 1, 0.5});
+		vec4 faded = {1, 1, 1, 0.3};
+
+		render_aabb((f32*)&start_aabb, faded);
+		render_line_segment(start_aabb.position, pos, faded);
 
 		vec2 magnitude;
 		vec2_sub(magnitude, pos, start_aabb.position);
@@ -109,7 +111,6 @@ int main(int argc, char *argv[]) {
 		f32 x = sum_aabb.position[0];
 		f32 y = sum_aabb.position[1];
 		f32 size = sum_aabb.half_size[0];
-		vec4 faded = {1, 1, 1, 0.2};
 
 		render_line_segment((vec2){x - size, 0}, (vec2){x - size, global.render.height}, faded);
 		render_line_segment((vec2){x + size, 0}, (vec2){x + size, global.render.height}, faded);
