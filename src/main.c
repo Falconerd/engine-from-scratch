@@ -95,6 +95,18 @@ int main(int argc, char *argv[]) {
 		render_aabb((f32*)&start_aabb, faded);
 		render_line_segment(start_aabb.position, pos, faded);
 
+		f32 x = sum_aabb.position[0];
+		f32 y = sum_aabb.position[1];
+		f32 size = sum_aabb.half_size[0];
+
+		render_line_segment((vec2){x - size, 0}, (vec2){x - size, global.render.height}, faded);
+		render_line_segment((vec2){x + size, 0}, (vec2){x + size, global.render.height}, faded);
+		render_line_segment((vec2){0, y - size}, (vec2){global.render.width, y - size}, faded);
+		render_line_segment((vec2){0, y + size}, (vec2){global.render.width, y + size}, faded);
+
+		vec2 min, max;
+		aabb_min_max(min, max, sum_aabb);
+
 		vec2 magnitude;
 		vec2_sub(magnitude, pos, start_aabb.position);
 		Hit hit = ray_intersect_aabb(start_aabb.position, magnitude, sum_aabb); 
@@ -108,31 +120,19 @@ int main(int argc, char *argv[]) {
 			render_quad(hit.position, (vec2){5, 5}, CYAN);
 		}
 
-		f32 x = sum_aabb.position[0];
-		f32 y = sum_aabb.position[1];
-		f32 size = sum_aabb.half_size[0];
-
-		render_line_segment((vec2){x - size, 0}, (vec2){x - size, global.render.height}, faded);
-		render_line_segment((vec2){x + size, 0}, (vec2){x + size, global.render.height}, faded);
-		render_line_segment((vec2){0, y - size}, (vec2){global.render.width, y - size}, faded);
-		render_line_segment((vec2){0, y + size}, (vec2){global.render.width, y + size}, faded);
-
-		vec2 min, max;
-		aabb_min_max(min, max, sum_aabb);
-
 		for (u8 i = 0; i < 2; ++i) {
 			if (magnitude[i] != 0) {
 				f32 t1 = (min[i] - pos[i]) / magnitude[i];
 				f32 t2 = (max[i] - pos[i]) / magnitude[i];
 
-				vec2 x;
-				vec2_scale(x, magnitude, t1);
-				vec2_add(x, x, pos);
-				render_quad(x, (vec2){5, 5}, ORANGE);
+				vec2 point;
+				vec2_scale(point, magnitude, t1);
+				vec2_add(point, point, pos);
+				render_quad(point, (vec2){5, 5}, ORANGE);
 
-				vec2_scale(x, magnitude, t2);
-				vec2_add(x, x, pos);
-				render_quad(x, (vec2){5, 5}, CYAN);
+				vec2_scale(point, magnitude, t2);
+				vec2_add(point, point, pos);
+				render_quad(point, (vec2){5, 5}, CYAN);
 			}
 		}
 
