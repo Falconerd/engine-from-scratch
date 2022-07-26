@@ -66,7 +66,8 @@ Hit ray_intersect_aabb(vec2 position, vec2 magnitude, AABB aabb) {
 	vec2 min, max;
 	aabb_min_max(min, max, aabb);
 
-	f32 last_entry = -INFINITY, first_exit = INFINITY;
+	f32 last_entry = -INFINITY;
+	f32 first_exit = INFINITY;
 
 	// The naive slab test.
 	for (u8 i = 0; i < 2; ++i) {
@@ -81,11 +82,11 @@ Hit ray_intersect_aabb(vec2 position, vec2 magnitude, AABB aabb) {
 		}
 	}
 
-	// Get the position of the hit.
-	hit.position[0] = position[0] + magnitude[0] * last_entry;
-	hit.position[1] = position[1] + magnitude[1] * last_entry;
+	if (first_exit > last_entry && first_exit > 0 && first_exit < 1) {
+		// Get the position of the hit.
+		hit.position[0] = position[0] + magnitude[0] * last_entry;
+		hit.position[1] = position[1] + magnitude[1] * last_entry;
 
-	if (first_exit > last_entry && first_exit > 0 && last_entry < 1) {
 		hit.is_hit = true;
 		hit.time = last_entry;
 	}
