@@ -85,19 +85,8 @@ Hit ray_intersect_aabb(vec2 position, vec2 magnitude, AABB aabb) {
 	hit.position[0] = position[0] + magnitude[0] * last_entry;
 	hit.position[1] = position[1] + magnitude[1] * last_entry;
 
-	// Calculate the normals.
-	f32 dx = hit.position[0] - aabb.position[0];
-	f32 px = aabb.half_size[0] - fabsf(dx);
-	f32 dy = hit.position[1] - aabb.position[1];
-	f32 py = aabb.half_size[1] - fabsf(dy);
-
-	if (px < py)
-		hit.normal[0] = fsignf(dx);
-	else
-		hit.normal[1] = fsignf(dy);
-
 	if (first_exit > last_entry && first_exit > 0 && last_entry < 1) {
-		hit.hit = true;
+		hit.is_hit = true;
 		hit.time = last_entry;
 	}
 

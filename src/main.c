@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
 		vec2_sub(magnitude, pos, start_aabb.position);
 		Hit hit = ray_intersect_aabb(start_aabb.position, magnitude, sum_aabb); 
 
-		if (hit.hit) {
+		if (hit.is_hit) {
 			AABB hit_aabb = {
 				.position = {hit.position[0], hit.position[1]},
 				.half_size = {start_aabb.half_size[0], start_aabb.half_size[1]}
@@ -128,11 +128,17 @@ int main(int argc, char *argv[]) {
 				vec2 point;
 				vec2_scale(point, magnitude, t1);
 				vec2_add(point, point, pos);
-				render_quad(point, (vec2){5, 5}, ORANGE);
+				if (min[i] < start_aabb.position[i])
+					render_quad(point, (vec2){5, 5}, ORANGE);
+				else
+					render_quad(point, (vec2){5, 5}, CYAN);
 
 				vec2_scale(point, magnitude, t2);
 				vec2_add(point, point, pos);
-				render_quad(point, (vec2){5, 5}, CYAN);
+				if (max[i] < start_aabb.position[i])
+					render_quad(point, (vec2){5, 5}, CYAN);
+				else
+					render_quad(point, (vec2){5, 5}, ORANGE);
 			}
 		}
 

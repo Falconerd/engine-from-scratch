@@ -16,10 +16,9 @@ typedef struct body {
 } Body;
 
 typedef struct hit {
-	bool hit;
+	bool is_hit;
 	f32 time;
 	vec2 position;
-	vec2 normal;
 } Hit;
 
 void physics_init(void);
