@@ -134,12 +134,17 @@ int main(int argc, char *argv[]) {
 				else
 					render_quad(point, (vec2){5, 5}, CYAN);
 
+				vec2 start = {point[0], point[1]};
+
 				vec2_scale(point, magnitude, t2);
 				vec2_add(point, point, pos);
 				if (max[i] < start_aabb.position[i])
 					render_quad(point, (vec2){5, 5}, CYAN);
 				else
 					render_quad(point, (vec2){5, 5}, ORANGE);
+
+				if (t1 < 0 && t2 < 0)
+					render_line_segment(start, point, WHITE);
 			}
 		}
 
