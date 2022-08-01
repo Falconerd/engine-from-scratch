@@ -44,9 +44,10 @@ future. I will post a video and poll at the end
 of the current series.
 
 - Batch renderer.
+- Tile-based levels.
+- Custom memory allocators.
 - Custom vector math library.
 - Custom immediate mode UI library.
-- Custom memory allocators.
 - Scene management.
 - Decoupled game loop.
 
