@@ -46,6 +46,7 @@ of the current series.
 - Batch renderer.
 - Tile-based levels.
 - Custom memory allocators.
+- Broad phase collision detection.
 - Custom vector math library.
 - Custom immediate mode UI library.
 - Scene management.
