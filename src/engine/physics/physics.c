@@ -139,14 +139,10 @@ static Hit sweep_static_bodies(AABB aabb, vec2 velocity) {
 		if (hit.time < result.time) {
 			result = hit;
 		} else if (hit.time == result.time) {
-			if (fabsf(velocity[0]) > fabsf(velocity[1])) {
-				if (hit.normal[0] != 0) {
-					result = hit;
-				}
-			} else if (fabsf(velocity[1]) > fabsf(velocity[0])) {
-				if (hit.normal[1] != 0) {
-					result = hit;
-				}
+			if (fabsf(velocity[0]) > fabsf(velocity[1]) && hit.normal[0] != 0) {
+				result = hit;
+			} else if (fabsf(velocity[1]) > fabsf(velocity[0]) && hit.normal[1] != 0) {
+				result = hit;
 			}
 		}
 	}
@@ -163,6 +159,7 @@ static void sweep_response(Body *body, vec2 velocity) {
 
 		if (hit.normal[0] != 0) {
 			body->aabb.position[1] += velocity[1];
+			body->velocity[0] = 0;
 		} else if (hit.normal[1] != 0) {
 			body->aabb.position[0] += velocity[0];
 			body->velocity[1] = 0;
