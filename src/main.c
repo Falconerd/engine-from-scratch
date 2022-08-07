@@ -44,8 +44,8 @@ static void input_handle(Body *body_player) {
 		vely -= 800;
 	}
 
-	body_player->velocity[0] = velx;
-	//body_player->acceleration[0] = accelx;
+	//body_player->velocity[0] = velx;
+	body_player->acceleration[0] = accelx;
 	body_player->velocity[1] = vely;
 }
 

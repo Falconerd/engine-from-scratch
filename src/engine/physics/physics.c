@@ -7,7 +7,7 @@
 
 static Physics_State_Internal state;
 
-static u32 iterations = 10;
+static u32 iterations = 2;
 static f32 tick_rate;
 
 void aabb_min_max(vec2 min, vec2 max, AABB aabb) {
@@ -163,16 +163,12 @@ static void sweep_response(Body *body, vec2 velocity) {
 
 		if (hit.normal[0] != 0) {
 			body->aabb.position[1] += velocity[1];
-		}
-
-		// Slide across the ground.
-		if (hit.normal[1] > 0) {
+		} else if (hit.normal[1] > 0) {
+			// Slide across the ground.
 			body->aabb.position[0] += velocity[0];
 			body->velocity[1] = 0;
-		}
-
-		// Slide across the ceiling.
-		if (hit.normal[1] < 0 && velocity[1] > 0) {
+		} else if (hit.normal[1] < 0 && velocity[1] > 0) {
+			// Slide across the ceiling.
 			body->aabb.position[0] += velocity[0];
 			body->velocity[1] = 0;
 		}
