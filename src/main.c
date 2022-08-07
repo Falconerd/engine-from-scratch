@@ -26,18 +26,18 @@ static void input_handle(Body *body_player) {
 	}
 
 	if (global.input.right > 0) {
-		velx += 800;
+		velx += 1000;
 		accelx += 50;
 	}
 
 	if (global.input.left > 0) {
-		velx -= 800;
+		velx -= 1000;
 		accelx -= 50;
 	}
 
 	// Set to a value, not added to.
 	if (global.input.up > 0) {
-		vely = 800;
+		vely = 4000;
 	}
 
 	if (global.input.down < 0) {

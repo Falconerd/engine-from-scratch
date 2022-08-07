@@ -167,7 +167,6 @@ static void sweep_response(Body *body, vec2 velocity) {
 
 		// Slide across the ground.
 		if (hit.normal[1] > 0) {
-			//body->is_grounded = true;
 			body->aabb.position[0] += velocity[0];
 			body->velocity[1] = 0;
 		}
@@ -175,9 +174,8 @@ static void sweep_response(Body *body, vec2 velocity) {
 		// Slide across the ceiling.
 		if (hit.normal[1] < 0 && velocity[1] > 0) {
 			body->aabb.position[0] += velocity[0];
+			body->velocity[1] = 0;
 		}
-
-		render_line_segment(body->aabb.position, (vec2){body->aabb.position[0] + 50 * hit.normal[0], body->aabb.position[1] + 50 * hit.normal[1]}, WHITE);
 	} else {
 		body->aabb.position[0] += velocity[0];
 		body->aabb.position[1] += velocity[1];
@@ -198,10 +196,6 @@ static void stationary_response(Body *body) {
 
 			body->aabb.position[0] += penetration_vector[0];
 			body->aabb.position[1] += penetration_vector[1];
-
-			vec2 x;
-			vec2_add(x, body->aabb.position, penetration_vector);
-			render_line_segment(body->aabb.position, x, YELLOW);
 		}
 	}
 }
@@ -227,11 +221,6 @@ void physics_update(void) {
 			sweep_response(body, scaled_velocity);
 			stationary_response(body);
 		}
-
-		vec2 x;
-		vec2_scale(x, body->velocity, global.time.delta);
-		vec2_add(x, body->aabb.position, x);
-		render_line_segment(body->aabb.position, x, YELLOW);
 	}
 }
 
