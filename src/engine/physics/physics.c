@@ -23,14 +23,6 @@ AABB aabb_minkowski_difference(AABB a, AABB b) {
 	return result;
 }
 
-AABB aabb_sum_size(AABB a, AABB b) {
-	AABB result = a;
-
-	vec2_add(result.half_size, a.half_size, b.half_size);
-
-	return result;
-}
-
 Hit ray_intersect_aabb(vec2 pos, vec2 magnitude, AABB aabb) {
 	Hit hit = {0};
 	vec2 min, max;
@@ -129,9 +121,12 @@ static Hit sweep_static_bodies(AABB aabb, vec2 velocity) {
 	Hit result = {.time = 0xBEEF}; // Any large number *should* work fine.
 
 	for (u32 i = 0; i < state.static_body_list->len; ++i) {
-		Static_Body *body = physics_static_body_get(i);
+		Static_Body *static_body = physics_static_body_get(i);
 
-		Hit hit = ray_intersect_aabb(aabb.position, velocity, aabb_sum_size(body->aabb, aabb));
+		AABB sum_aabb = static_body->aabb;
+		vec2_add(sum_aabb.half_size, sum_aabb.half_size, aabb.half_size);
+
+		Hit hit = ray_intersect_aabb(aabb.position, velocity, sum_aabb);
 		if (!hit.is_hit) {
 			continue;
 		}
