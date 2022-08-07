@@ -163,12 +163,7 @@ static void sweep_response(Body *body, vec2 velocity) {
 
 		if (hit.normal[0] != 0) {
 			body->aabb.position[1] += velocity[1];
-		} else if (hit.normal[1] > 0) {
-			// Slide across the ground.
-			body->aabb.position[0] += velocity[0];
-			body->velocity[1] = 0;
-		} else if (hit.normal[1] < 0 && velocity[1] > 0) {
-			// Slide across the ceiling.
+		} else if (hit.normal[1] != 0) {
 			body->aabb.position[0] += velocity[0];
 			body->velocity[1] = 0;
 		}
