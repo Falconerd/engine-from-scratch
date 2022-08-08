@@ -44,8 +44,8 @@ static void input_handle(Body *body_player) {
 		vely -= 800;
 	}
 
-	//body_player->velocity[0] = velx;
-	body_player->acceleration[0] = accelx;
+	body_player->velocity[0] = velx;
+	//body_player->acceleration[0] = accelx;
 	body_player->velocity[1] = vely;
 }
 
@@ -94,11 +94,9 @@ int main(int argc, char *argv[]) {
 
 		input_update();
 		input_handle(body_player);
+		physics_update();
 
 		render_begin();
-
-		// Moved physics_update down so it can draw stuff.
-		physics_update();
 
 		render_aabb((f32*)static_body_a, WHITE);
 		render_aabb((f32*)static_body_b, WHITE);
