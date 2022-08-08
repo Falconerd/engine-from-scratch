@@ -13,16 +13,33 @@
 #include "engine/util.h"
 
 static bool should_quit = false;
-static vec2 pos;
 
-static void input_handle(void) {
-	if (global.input.escape == KS_PRESSED || global.input.escape == KS_HELD)
+static void input_handle(Body *body_player) {
+	if (global.input.escape) {
 		should_quit = true;
+	}
 
-	i32 x, y;
-	SDL_GetMouseState(&x, &y);
-	pos[0] = (f32)x;
-	pos[1] = global.render.height - y;
+	f32 velx = 0;
+	f32 vely = body_player->velocity[1];
+
+	if (global.input.right) {
+		velx += 1000;
+	}
+
+	if (global.input.left) {
+		velx -= 1000;
+	}
+
+	if (global.input.up) {
+		vely = 4000;
+	}
+
+	if (global.input.down) {
+		vely -= 800;
+	}
+
+	body_player->velocity[0] = velx;
+	body_player->velocity[1] = vely;
 }
 
 int main(int argc, char *argv[]) {
@@ -31,26 +48,18 @@ int main(int argc, char *argv[]) {
 	render_init();
 	physics_init();
 
-	pos[0] = global.render.width * 0.5;
-	pos[1] = global.render.height * 0.5;
-
 	SDL_ShowCursor(false);
 
-	AABB test_aabb = {
-		.position = {global.render.width * 0.5, global.render.height * 0.5},
-		.half_size = {50, 50}
-	};
+	u32 body_id = physics_body_create((vec2){100, 800}, (vec2){50, 50});
 
-	AABB cursor_aabb = {.half_size = {75, 75}};
+	f32 width = global.render.width;
+	f32 height = global.render.height;
 
-	AABB start_aabb = {.half_size = {75, 75}};
-
-	AABB sum_aabb = {
-		.position = {test_aabb.position[0], test_aabb.position[1]},
-		.half_size = {
-			test_aabb.half_size[0] + cursor_aabb.half_size[0],
-			test_aabb.half_size[1] + cursor_aabb.half_size[1]}
-	};
+	u32 static_body_a_id = physics_static_body_create((vec2){width * 0.5 - 25, height - 25}, (vec2){width - 50, 50});
+	u32 static_body_b_id = physics_static_body_create((vec2){width - 25, height * 0.5 + 25}, (vec2){50, height - 50});
+	u32 static_body_c_id = physics_static_body_create((vec2){width * 0.5 + 25, 25}, (vec2){width - 50, 50});
+	u32 static_body_d_id = physics_static_body_create((vec2){25, height * 0.5 - 25}, (vec2){50, height - 50});
+	u32 static_body_e_id = physics_static_body_create((vec2){width * 0.5, height * 0.5}, (vec2){150, 150});
 
 	while (!should_quit) {
 		time_update();
@@ -62,86 +71,30 @@ int main(int argc, char *argv[]) {
 			case SDL_QUIT:
 				should_quit = true;
 				break;
-			case SDL_MOUSEBUTTONDOWN:
-				if (event.button.button == SDL_BUTTON_LEFT) {
-					start_aabb.position[0] = pos[0];
-					start_aabb.position[1] = pos[1];
-				}
-				break;
 			default:
 				break;
 			}
 		}
 
+		Body *body_player = physics_body_get(body_id);
+		Static_Body *static_body_a = physics_static_body_get(static_body_a_id);
+		Static_Body *static_body_b = physics_static_body_get(static_body_b_id);
+		Static_Body *static_body_c = physics_static_body_get(static_body_c_id);
+		Static_Body *static_body_d = physics_static_body_get(static_body_d_id);
+		Static_Body *static_body_e = physics_static_body_get(static_body_e_id);
+
 		input_update();
-		input_handle();
+		input_handle(body_player);
 		physics_update();
 
 		render_begin();
 
-		cursor_aabb.position[0] = pos[0];
-		cursor_aabb.position[1] = pos[1];
-
-		render_aabb((f32*)&test_aabb, WHITE);
-
-		vec4 faded = {1, 1, 1, 0.3};
-
-		if (physics_aabb_intersect_aabb(test_aabb, cursor_aabb)) {
-			render_aabb((f32*)&cursor_aabb, RED);
-		} else {
-			render_aabb((f32*)&cursor_aabb, WHITE);
-		}
-
-		render_aabb((f32*)&start_aabb, faded);
-		render_line_segment(start_aabb.position, pos, faded);
-		
-		f32 x = sum_aabb.position[0];
-		f32 y = sum_aabb.position[1];
-		f32 size = sum_aabb.half_size[0];
-
-		render_line_segment((vec2){x - size, 0}, (vec2){x - size, global.render.height}, faded);
-		render_line_segment((vec2){x + size, 0}, (vec2){x + size, global.render.height}, faded);
-		render_line_segment((vec2){0, y - size}, (vec2){global.render.width, y - size}, faded);
-		render_line_segment((vec2){0, y + size}, (vec2){global.render.width, y + size}, faded);
-
-		vec2 min, max;
-		aabb_min_max(min, max, sum_aabb);
-
-		vec2 magnitude;
-		vec2_sub(magnitude, pos, start_aabb.position);
-
-		Hit hit = ray_intersect_aabb(start_aabb.position, magnitude, sum_aabb);
-
-		if (hit.is_hit) {
-			AABB hit_aabb = {
-				.position = {hit.position[0], hit.position[1]},
-				.half_size = {start_aabb.half_size[0], start_aabb.half_size[1]}
-			};
-			render_aabb((f32*)&hit_aabb, CYAN);
-			render_quad(hit.position, (vec2){5, 5}, CYAN);
-		}
-
-		for (u8 i = 0; i < 2; ++i) {
-			if (magnitude[i] != 0) {
-				f32 t1 = (min[i] - pos[i]) / magnitude[i];
-				f32 t2 = (max[i] - pos[i]) / magnitude[i];
-
-				vec2 point;
-				vec2_scale(point, magnitude, t1);
-				vec2_add(point, point, pos);
-				if (min[i] < start_aabb.position[i])
-					render_quad(point, (vec2){5, 5}, ORANGE);
-				else
-					render_quad(point, (vec2){5, 5}, CYAN);
-
-				vec2_scale(point, magnitude, t2);
-				vec2_add(point, point, pos);
-				if (max[i] < start_aabb.position[i])
-					render_quad(point, (vec2){5, 5}, CYAN);
-				else
-					render_quad(point, (vec2){5, 5}, ORANGE);
-			}
-		}
+		render_aabb((f32*)static_body_a, WHITE);
+		render_aabb((f32*)static_body_b, WHITE);
+		render_aabb((f32*)static_body_c, WHITE);
+		render_aabb((f32*)static_body_d, WHITE);
+		render_aabb((f32*)static_body_e, WHITE);
+		render_aabb((f32*)body_player, CYAN);
 
 		render_end();
 		time_update_late();
