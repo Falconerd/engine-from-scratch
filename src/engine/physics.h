@@ -13,7 +13,16 @@ typedef struct body {
 	AABB aabb;
 	vec2 velocity;
 	vec2 acceleration;
+	u32 flags;
 } Body;
+
+typedef enum body_flags {
+	BODY_FLAGS_COLLISION_LEFT = 1 << 0,
+	BODY_FLAGS_COLLISION_RIGHT = 1 << 1,
+	BODY_FLAGS_COLLISION_UP = 1 << 2,
+	BODY_FLAGS_COLLISION_DOWN = 1 << 3,
+	BODY_FLAGS_COLLISION_STATIC = 1 << 4,
+} Body_Flags;
 
 typedef struct static_body {
 	AABB aabb;
@@ -28,9 +37,8 @@ typedef struct hit {
 
 void physics_init(void);
 void physics_update(void);
-usize physics_body_create(vec2 position, vec2 size);
+usize physics_body_create(vec2 position, vec2 size, vec2 velocity);
 Body *physics_body_get(usize index);
-usize physics_body_create(vec2 position, vec2 size);
 Static_Body *physics_static_body_get(usize index);
 usize physics_static_body_create(vec2 position, vec2 size);
 bool physics_point_intersect_aabb(vec2 point, AABB aabb);

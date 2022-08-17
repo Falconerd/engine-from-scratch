@@ -152,12 +152,26 @@ static void sweep_response(Body *body, vec2 velocity) {
 		body->aabb.position[0] = hit.position[0];
 		body->aabb.position[1] = hit.position[1];
 
+		body->flags |= BODY_FLAGS_COLLISION_STATIC;
+
 		if (hit.normal[0] != 0) {
 			body->aabb.position[1] += velocity[1];
 			body->velocity[0] = 0;
+
+			if (hit.normal[0] < 0) {
+				body->flags |= BODY_FLAGS_COLLISION_RIGHT;
+			} else {
+				body->flags |= BODY_FLAGS_COLLISION_LEFT;
+			}
 		} else if (hit.normal[1] != 0) {
 			body->aabb.position[0] += velocity[0];
 			body->velocity[1] = 0;
+
+			if (hit.normal[1] < 0) {
+				body->flags |= BODY_FLAGS_COLLISION_UP;
+			} else {
+				body->flags |= BODY_FLAGS_COLLISION_DOWN;
+			}
 		}
 	} else {
 		vec2_add(body->aabb.position, body->aabb.position, velocity);
@@ -198,6 +212,7 @@ void physics_update(void) {
 		vec2 scaled_velocity;
 		vec2_scale(scaled_velocity, body->velocity, global.time.delta * tick_rate);
 
+		body->flags = 0;
 		for (u32 j = 0; j < iterations; ++j) {
 			sweep_response(body, scaled_velocity);
 			stationary_response(body);
@@ -205,13 +220,13 @@ void physics_update(void) {
 	}
 }
 
-usize physics_body_create(vec2 position, vec2 size) {
+usize physics_body_create(vec2 position, vec2 size, vec2 velocity) {
 	Body body = {
 		.aabb = {
 			.position = { position[0], position[1] },
 			.half_size = { size[0] * 0.5, size[1] * 0.5 },
 		},
-		.velocity = { 0, 0 },
+		.velocity = { velocity[0], velocity[1] },
 	};
 
 	if (array_list_append(state.body_list, &body) == (usize)-1)
@@ -241,5 +256,4 @@ usize physics_static_body_create(vec2 position, vec2 size) {
 Static_Body *physics_static_body_get(usize index) {
 	return array_list_get(state.static_body_list, index);
 }
-
 
