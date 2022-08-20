@@ -4,6 +4,14 @@
 #include <linmath.h>
 #include "types.h"
 
+typedef enum body_flags {
+	BODY_FLAGS_COLLISION_LEFT = 1 << 0,
+	BODY_FLAGS_COLLISION_RIGHT = 1 << 1,
+	BODY_FLAGS_COLLISION_UP = 1 << 2,
+	BODY_FLAGS_COLLISION_DOWN = 1 << 3,
+	BODY_FLAGS_COLLISION_STATIC = 1 << 4,
+} Body_Flags;
+
 typedef struct aabb {
 	vec2 position;
 	vec2 half_size;
@@ -13,19 +21,16 @@ typedef struct body {
 	AABB aabb;
 	vec2 velocity;
 	vec2 acceleration;
-	u32 flags;
+	u8 collision_direction_flags;
+	u8 collision_layer_flags;
+	u8 collision_layer;
+	u8 collision_mask;
 } Body;
-
-typedef enum body_flags {
-	BODY_FLAGS_COLLISION_LEFT = 1 << 0,
-	BODY_FLAGS_COLLISION_RIGHT = 1 << 1,
-	BODY_FLAGS_COLLISION_UP = 1 << 2,
-	BODY_FLAGS_COLLISION_DOWN = 1 << 3,
-	BODY_FLAGS_COLLISION_STATIC = 1 << 4,
-} Body_Flags;
 
 typedef struct static_body {
 	AABB aabb;
+	u8 collision_layer;
+	u8 collision_mask;
 } Static_Body;
 
 typedef struct hit {
@@ -33,14 +38,15 @@ typedef struct hit {
 	f32 time;
 	vec2 position;
 	vec2 normal;
+	u8 hit_layer_mask;
 } Hit;
 
 void physics_init(void);
 void physics_update(void);
-usize physics_body_create(vec2 position, vec2 size, vec2 velocity);
+usize physics_body_create(vec2 position, vec2 size, vec2 velocity, u8 collision_layer, u8 collision_mask);
 Body *physics_body_get(usize index);
 Static_Body *physics_static_body_get(usize index);
-usize physics_static_body_create(vec2 position, vec2 size);
+usize physics_static_body_create(vec2 position, vec2 size, u8 collision_layer, u8 collision_mask);
 bool physics_point_intersect_aabb(vec2 point, AABB aabb);
 bool physics_aabb_intersect_aabb(AABB a, AABB b);
 AABB aabb_minkowski_difference(AABB a, AABB b);

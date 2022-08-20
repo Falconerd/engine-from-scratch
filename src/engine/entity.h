@@ -10,6 +10,6 @@ typedef struct entity {
 } Entity;
 
 void entity_init(void);
-usize entity_create(vec2 position, vec2 size, vec2 velocity);
+usize entity_create(vec2 position, vec2 size, vec2 velocity, u8 collision_layer, u8 collision_mask);
 Entity *entity_get(usize id);
 usize entity_count();

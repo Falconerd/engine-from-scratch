@@ -31,7 +31,7 @@ static void input_handle(Body *body_player) {
 		velx -= 1000;
 	}
 
-	if (global.input.up && body_player->flags & BODY_FLAGS_COLLISION_DOWN) {
+	if (global.input.up && body_player->collision_direction_flags & BODY_FLAGS_COLLISION_DOWN) {
 		vely = 4000;
 	}
 
@@ -43,6 +43,12 @@ static void input_handle(Body *body_player) {
 	body_player->velocity[1] = vely;
 }
 
+typedef enum collision_layer {
+	COLLISION_LAYER_PLAYER = 1,
+	COLLISION_LAYER_ENEMY = 1 << 1,
+	COLLISION_LAYER_TERRAIN = 1 << 2,
+} Collision_Layer;
+
 int main(int argc, char *argv[]) {
 	time_init(60);
 	config_init();
@@ -52,19 +58,23 @@ int main(int argc, char *argv[]) {
 
 	SDL_ShowCursor(false);
 
-	u32 player_id = entity_create((vec2){100, 800}, (vec2){100, 100}, (vec2){0, 0});
+	u8 wall_mask = COLLISION_LAYER_PLAYER | COLLISION_LAYER_ENEMY;
+	u8 enemy_mask = COLLISION_LAYER_PLAYER | COLLISION_LAYER_TERRAIN;
+	u8 player_mask = COLLISION_LAYER_TERRAIN | COLLISION_LAYER_ENEMY;
+
+	u32 player_id = entity_create((vec2){100, 800}, (vec2){100, 100}, (vec2){0, 0}, COLLISION_LAYER_PLAYER, player_mask);
 
 	f32 width = global.render.width;
 	f32 height = global.render.height;
 
-	u32 static_body_a_id = physics_static_body_create((vec2){width * 0.5 - 25, height - 25}, (vec2){width - 50, 50});
-	u32 static_body_b_id = physics_static_body_create((vec2){width - 25, height * 0.5 + 25}, (vec2){50, height - 50});
-	u32 static_body_c_id = physics_static_body_create((vec2){width * 0.5 + 25, 25}, (vec2){width - 50, 50});
-	u32 static_body_d_id = physics_static_body_create((vec2){25, height * 0.5 - 25}, (vec2){50, height - 50});
-	u32 static_body_e_id = physics_static_body_create((vec2){width * 0.5, height * 0.5}, (vec2){150, 150});
+	u32 static_body_a_id = physics_static_body_create((vec2){width * 0.5 - 25, height - 25}, (vec2){width - 50, 50}, COLLISION_LAYER_TERRAIN, wall_mask);
+	u32 static_body_b_id = physics_static_body_create((vec2){width - 25, height * 0.5 + 25}, (vec2){50, height - 50}, COLLISION_LAYER_TERRAIN, wall_mask);
+	u32 static_body_c_id = physics_static_body_create((vec2){width * 0.5 + 25, 25}, (vec2){width - 50, 50}, COLLISION_LAYER_TERRAIN, wall_mask);
+	u32 static_body_d_id = physics_static_body_create((vec2){25, height * 0.5 - 25}, (vec2){50, height - 50}, COLLISION_LAYER_TERRAIN, wall_mask);
+	u32 static_body_e_id = physics_static_body_create((vec2){width * 0.5, height * 0.5}, (vec2){150, 150}, COLLISION_LAYER_TERRAIN, wall_mask);
 
-	usize entity_a_id = entity_create((vec2){600, 600}, (vec2){50, 50}, (vec2){900, 0});
-	usize entity_b_id = entity_create((vec2){800, 800}, (vec2){50, 50}, (vec2){900, 0});
+	usize entity_a_id = entity_create((vec2){600, 600}, (vec2){50, 50}, (vec2){900, 0}, COLLISION_LAYER_ENEMY, enemy_mask);
+	usize entity_b_id = entity_create((vec2){800, 800}, (vec2){50, 50}, (vec2){900, 0}, COLLISION_LAYER_ENEMY, enemy_mask);
 
 	while (!should_quit) {
 		time_update();
@@ -102,6 +112,10 @@ int main(int argc, char *argv[]) {
 		render_aabb((f32*)static_body_e, WHITE);
 		render_aabb((f32*)body_player, CYAN);
 
+		if (body_player->collision_layer_flags & COLLISION_LAYER_ENEMY) {
+			render_aabb((f32*)body_player, YELLOW);
+		}
+
 		for (u32 i = 1; i < entity_count(); ++i) {
 			Entity *entity = entity_get(i);
 			if (!entity->is_active) {
@@ -111,12 +125,12 @@ int main(int argc, char *argv[]) {
 			Body *body = physics_body_get(entity->body_id);
 			render_aabb((f32*)body->aabb.position, WHITE);
 
-			if (body->flags & BODY_FLAGS_COLLISION_LEFT) {
+			if (body->collision_direction_flags & BODY_FLAGS_COLLISION_LEFT) {
 				render_aabb((f32*)body->aabb.position, YELLOW);
 				body->velocity[0] = 700;
 			}
 
-			if (body->flags & BODY_FLAGS_COLLISION_RIGHT) {
+			if (body->collision_direction_flags & BODY_FLAGS_COLLISION_RIGHT) {
 				render_aabb((f32*)body->aabb.position, ORANGE);
 				body->velocity[0] = -700;
 			}
