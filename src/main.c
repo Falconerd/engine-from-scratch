@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
 	u32 static_body_e_id = physics_static_body_create((vec2){width * 0.5, height * 0.5}, (vec2){150, 150}, COLLISION_LAYER_TERRAIN, wall_mask);
 
 	usize entity_a_id = entity_create((vec2){600, 600}, (vec2){50, 50}, (vec2){900, 0}, COLLISION_LAYER_ENEMY, enemy_mask);
-	usize entity_b_id = entity_create((vec2){800, 800}, (vec2){50, 50}, (vec2){900, 0}, COLLISION_LAYER_ENEMY, enemy_mask);
+	usize entity_b_id = entity_create((vec2){800, 800}, (vec2){50, 50}, (vec2){900, 0}, 0, enemy_mask);
 
 	while (!should_quit) {
 		time_update();
@@ -116,6 +116,8 @@ int main(int argc, char *argv[]) {
 			render_aabb((f32*)body_player, YELLOW);
 		}
 
+		// Starting at 1 because we know the "player" is stored first.
+		// This is only the case because we created the entity first.
 		for (u32 i = 1; i < entity_count(); ++i) {
 			Entity *entity = entity_get(i);
 			if (!entity->is_active) {
@@ -123,15 +125,18 @@ int main(int argc, char *argv[]) {
 			}
 
 			Body *body = physics_body_get(entity->body_id);
-			render_aabb((f32*)body->aabb.position, WHITE);
+
+			render_aabb((f32*)body, WHITE);
+
+			if (i == entity_b_id) {
+				render_aabb((f32*)body, RED);
+			}
 
 			if (body->collision_direction_flags & BODY_FLAGS_COLLISION_LEFT) {
-				render_aabb((f32*)body->aabb.position, YELLOW);
 				body->velocity[0] = 700;
 			}
 
 			if (body->collision_direction_flags & BODY_FLAGS_COLLISION_RIGHT) {
-				render_aabb((f32*)body->aabb.position, ORANGE);
 				body->velocity[0] = -700;
 			}
 		}

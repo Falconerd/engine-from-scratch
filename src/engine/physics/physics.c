@@ -116,6 +116,28 @@ void physics_init(void) {
 	tick_rate = 1.f / iterations;
 }
 
+static Hit aabb_sweep_aabb(AABB a, AABB b, vec2 velocity) {
+	AABB sum_aabb = b;
+	vec2_add(sum_aabb.half_size, sum_aabb.half_size, a.half_size);
+
+	return ray_intersect_aabb(a.position, velocity, sum_aabb);
+}
+
+static void update_sweep_result(Hit *result, Hit hit, u8 other_collision_layer, vec2 velocity) {
+	result->hit_layer_mask |= other_collision_layer;
+
+	if (hit.time < result->time) {
+		*result = hit;
+	} else if (hit.time == result->time) {
+		// Solve highest velocity axis first.
+		if (fabsf(velocity[0]) > fabsf(velocity[1]) && hit.normal[0] != 0) {
+			*result = hit;
+		} else if (fabsf(velocity[1]) > fabsf(velocity[0]) && hit.normal[1] != 0) {
+			*result = hit;
+		}
+	}
+}
+
 static Hit sweep_static_bodies(Body *body, vec2 velocity) {
 	Hit result = {.time = 0xBEEF};
 
@@ -126,26 +148,37 @@ static Hit sweep_static_bodies(Body *body, vec2 velocity) {
 			continue;
 		}
 
-		AABB sum_aabb = static_body->aabb;
-		vec2_add(sum_aabb.half_size, sum_aabb.half_size, body->aabb.half_size);
-
-		Hit hit = ray_intersect_aabb(body->aabb.position, velocity, sum_aabb);
+		Hit hit = aabb_sweep_aabb(body->aabb, static_body->aabb, velocity);
 		if (!hit.is_hit) {
 			continue;
 		}
 
-		result.hit_layer_mask |= static_body->collision_layer;
+		update_sweep_result(&result, hit, static_body->collision_layer, velocity);
+	}
 
-		if (hit.time < result.time) {
-			result = hit;
-		} else if (hit.time == result.time) {
-			// Solve highest velocity axis first.
-			if (fabsf(velocity[0]) > fabsf(velocity[1]) && hit.normal[0] != 0) {
-				result = hit;
-			} else if (fabsf(velocity[1]) > fabsf(velocity[0]) && hit.normal[1] != 0) {
-				result = hit;
-			}
+	return result;
+}
+
+static Hit sweep_bodies(Body *body, vec2 velocity) {
+	Hit result = {.time = 0xBEEF};
+
+	for (u32 i = 0; i < state.body_list->len; ++i) {
+		Body *other = physics_body_get(i);
+
+		if (body == other) {
+			continue;
 		}
+
+		if ((body->collision_mask & other->collision_mask) == 0) {
+			continue;
+		}
+
+		Hit hit = aabb_sweep_aabb(body->aabb, other->aabb, velocity);
+		if (!hit.is_hit) {
+			continue;
+		}
+
+		update_sweep_result(&result, hit, other->collision_layer, velocity);
 	}
 
 	return result;
@@ -153,6 +186,11 @@ static Hit sweep_static_bodies(Body *body, vec2 velocity) {
 
 static void sweep_response(Body *body, vec2 velocity) {
 	Hit hit = sweep_static_bodies(body, velocity);
+	Hit hit_moving = sweep_bodies(body, velocity);
+
+	if (hit_moving.is_hit) {
+		body->collision_layer_flags |= hit_moving.hit_layer_mask;
+	}
 
 	if (hit.is_hit) {
 		body->aabb.position[0] = hit.position[0];
@@ -246,15 +284,6 @@ void physics_update(void) {
 
 		body->collision_direction_flags = 0;
 		body->collision_layer_flags = 0;
-
-		// Moving collisions.
-		for (u32 j = 0; j < state.body_list->len; ++j) {
-			if (i == j) {
-				continue;
-			}
-
-			Body *body_b = array_list_get(state.body_list, j);
-		}
 
 		// Static collisions.
 		for (u32 j = 0; j < iterations; ++j) {
