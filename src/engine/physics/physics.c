@@ -153,6 +153,7 @@ static Hit sweep_static_bodies(Body *body, vec2 velocity) {
 			continue;
 		}
 
+		hit.other_id = i;
 		update_sweep_result(&result, hit, static_body->collision_layer, velocity);
 	}
 
@@ -178,6 +179,7 @@ static Hit sweep_bodies(Body *body, vec2 velocity) {
 			continue;
 		}
 
+		hit.other_id = i;
 		update_sweep_result(&result, hit, other->collision_layer, velocity);
 	}
 
@@ -189,33 +191,25 @@ static void sweep_response(Body *body, vec2 velocity) {
 	Hit hit_moving = sweep_bodies(body, velocity);
 
 	if (hit_moving.is_hit) {
-		body->collision_layer_flags |= hit_moving.hit_layer_mask;
+		if (body->on_hit != NULL) {
+			body->on_hit(body, physics_body_get(hit_moving.other_id), hit_moving);
+		}
 	}
 
 	if (hit.is_hit) {
 		body->aabb.position[0] = hit.position[0];
 		body->aabb.position[1] = hit.position[1];
 
-		body->collision_layer_flags |= hit.hit_layer_mask;
-
 		if (hit.normal[0] != 0) {
 			body->aabb.position[1] += velocity[1];
 			body->velocity[0] = 0;
-
-			if (hit.normal[0] < 0) {
-				body->collision_direction_flags |= BODY_FLAGS_COLLISION_RIGHT;
-			} else {
-				body->collision_direction_flags |= BODY_FLAGS_COLLISION_LEFT;
-			}
 		} else if (hit.normal[1] != 0) {
 			body->aabb.position[0] += velocity[0];
 			body->velocity[1] = 0;
+		}
 
-			if (hit.normal[1] < 0) {
-				body->collision_direction_flags |= BODY_FLAGS_COLLISION_UP;
-			} else {
-				body->collision_direction_flags |= BODY_FLAGS_COLLISION_DOWN;
-			}
+		if (body->on_hit_static != NULL) {
+			body->on_hit_static(body, physics_static_body_get(hit.other_id), hit);
 		}
 	} else {
 		vec2_add(body->aabb.position, body->aabb.position, velocity);
@@ -248,19 +242,7 @@ static void stationary_response(Body *body) {
 
 		vec2 penetration_vector;
 		if (aabb_intersect_aabb(body->aabb, static_body->aabb, penetration_vector)) {
-			body->collision_layer_flags |= static_body->collision_layer;
 			vec2_add(body->aabb.position, body->aabb.position, penetration_vector);
-		}
-	}
-
-	for (u32 i = 0; i < state.body_list->len; ++i) {
-		Body *other = physics_body_get(i);
-		if (other == body) {
-			continue;
-		}
-
-		if (aabb_intersect_aabb(body->aabb, other->aabb, NULL)) {
-			body->collision_layer_flags |= other->collision_layer;
 		}
 	}
 }
@@ -282,9 +264,6 @@ void physics_update(void) {
 		vec2 scaled_velocity;
 		vec2_scale(scaled_velocity, body->velocity, global.time.delta * tick_rate);
 
-		body->collision_direction_flags = 0;
-		body->collision_layer_flags = 0;
-
 		// Static collisions.
 		for (u32 j = 0; j < iterations; ++j) {
 			sweep_response(body, scaled_velocity);
@@ -293,7 +272,7 @@ void physics_update(void) {
 	}
 }
 
-usize physics_body_create(vec2 position, vec2 size, vec2 velocity, u8 collision_layer, u8 collision_mask) {
+usize physics_body_create(vec2 position, vec2 size, vec2 velocity, u8 collision_layer, u8 collision_mask, On_Hit on_hit, On_Hit_Static on_hit_static) {
 	Body body = {
 		.aabb = {
 			.position = { position[0], position[1] },
@@ -302,6 +281,8 @@ usize physics_body_create(vec2 position, vec2 size, vec2 velocity, u8 collision_
 		.velocity = { velocity[0], velocity[1] },
 		.collision_layer = collision_layer,
 		.collision_mask = collision_mask,
+		.on_hit = on_hit,
+		.on_hit_static = on_hit_static,
 	};
 
 	if (array_list_append(state.body_list, &body) == (usize)-1)

@@ -13,7 +13,15 @@
 #include "engine/util.h"
 #include "engine/entity.h"
 
+typedef enum collision_layer {
+	COLLISION_LAYER_PLAYER = 1,
+	COLLISION_LAYER_ENEMY = 1 << 1,
+	COLLISION_LAYER_TERRAIN = 1 << 2,
+} Collision_Layer;
+
 static bool should_quit = false;
+vec4 player_color = {0, 1, 1, 1};
+bool player_is_grounded = false;
 
 static void input_handle(Body *body_player) {
 	if (global.input.escape) {
@@ -31,7 +39,8 @@ static void input_handle(Body *body_player) {
 		velx -= 1000;
 	}
 
-	if (global.input.up && body_player->collision_direction_flags & BODY_FLAGS_COLLISION_DOWN) {
+	if (global.input.up && player_is_grounded) {
+		player_is_grounded = false;
 		vely = 4000;
 	}
 
@@ -43,11 +52,28 @@ static void input_handle(Body *body_player) {
 	body_player->velocity[1] = vely;
 }
 
-typedef enum collision_layer {
-	COLLISION_LAYER_PLAYER = 1,
-	COLLISION_LAYER_ENEMY = 1 << 1,
-	COLLISION_LAYER_TERRAIN = 1 << 2,
-} Collision_Layer;
+void player_on_hit(Body *self, Body *other, Hit hit) {
+	if (other->collision_layer == COLLISION_LAYER_ENEMY) {
+		player_color[0] = 1;
+		player_color[2] = 0;
+	}
+}
+
+void player_on_hit_static(Body *self, Static_Body *other, Hit hit) {
+	if (hit.normal[1] > 0) {
+		player_is_grounded = true;
+	}
+}
+
+void enemy_on_hit_static(Body *self, Static_Body *other, Hit hit) {
+	if (hit.normal[0] > 0) {
+		self->velocity[0] = 700;
+	}
+
+	if (hit.normal[0] < 0) {
+		self->velocity[0] = -700;
+	}
+}
 
 int main(int argc, char *argv[]) {
 	time_init(60);
@@ -62,7 +88,7 @@ int main(int argc, char *argv[]) {
 	u8 enemy_mask = COLLISION_LAYER_PLAYER | COLLISION_LAYER_TERRAIN;
 	u8 player_mask = COLLISION_LAYER_TERRAIN | COLLISION_LAYER_ENEMY;
 
-	u32 player_id = entity_create((vec2){100, 800}, (vec2){100, 100}, (vec2){0, 0}, COLLISION_LAYER_PLAYER, player_mask);
+	u32 player_id = entity_create((vec2){100, 800}, (vec2){100, 100}, (vec2){0, 0}, COLLISION_LAYER_PLAYER, player_mask, player_on_hit, player_on_hit_static);
 
 	f32 width = global.render.width;
 	f32 height = global.render.height;
@@ -73,8 +99,8 @@ int main(int argc, char *argv[]) {
 	u32 static_body_d_id = physics_static_body_create((vec2){25, height * 0.5 - 25}, (vec2){50, height - 50}, COLLISION_LAYER_TERRAIN, wall_mask);
 	u32 static_body_e_id = physics_static_body_create((vec2){width * 0.5, height * 0.5}, (vec2){150, 150}, COLLISION_LAYER_TERRAIN, wall_mask);
 
-	usize entity_a_id = entity_create((vec2){600, 600}, (vec2){50, 50}, (vec2){900, 0}, COLLISION_LAYER_ENEMY, enemy_mask);
-	usize entity_b_id = entity_create((vec2){800, 800}, (vec2){50, 50}, (vec2){900, 0}, 0, enemy_mask);
+	usize entity_a_id = entity_create((vec2){600, 600}, (vec2){50, 50}, (vec2){900, 0}, COLLISION_LAYER_ENEMY, enemy_mask, NULL, enemy_on_hit_static);
+	usize entity_b_id = entity_create((vec2){800, 800}, (vec2){50, 50}, (vec2){900, 0}, 0, enemy_mask, NULL, enemy_on_hit_static);
 
 	while (!should_quit) {
 		time_update();
@@ -110,38 +136,16 @@ int main(int argc, char *argv[]) {
 		render_aabb((f32*)static_body_c, WHITE);
 		render_aabb((f32*)static_body_d, WHITE);
 		render_aabb((f32*)static_body_e, WHITE);
-		render_aabb((f32*)body_player, CYAN);
+		render_aabb((f32*)body_player, player_color);
 
-		if (body_player->collision_layer_flags & COLLISION_LAYER_ENEMY) {
-			render_aabb((f32*)body_player, YELLOW);
-		}
-
-		// Starting at 1 because we know the "player" is stored first.
-		// This is only the case because we created the entity first.
-		for (u32 i = 1; i < entity_count(); ++i) {
-			Entity *entity = entity_get(i);
-			if (!entity->is_active) {
-				continue;
-			}
-
-			Body *body = physics_body_get(entity->body_id);
-
-			render_aabb((f32*)body, WHITE);
-
-			if (i == entity_b_id) {
-				render_aabb((f32*)body, RED);
-			}
-
-			if (body->collision_direction_flags & BODY_FLAGS_COLLISION_LEFT) {
-				body->velocity[0] = 700;
-			}
-
-			if (body->collision_direction_flags & BODY_FLAGS_COLLISION_RIGHT) {
-				body->velocity[0] = -700;
-			}
-		}
+		render_aabb((f32*)physics_body_get(entity_a_id), WHITE);
+		render_aabb((f32*)physics_body_get(entity_b_id), WHITE);
 
 		render_end();
+
+		player_color[0] = 0;
+		player_color[2] = 1;
+
 		time_update_late();
 	}
 
