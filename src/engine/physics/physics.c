@@ -123,9 +123,7 @@ static Hit aabb_sweep_aabb(AABB a, AABB b, vec2 velocity) {
 	return ray_intersect_aabb(a.position, velocity, sum_aabb);
 }
 
-static void update_sweep_result(Hit *result, Hit hit, u8 other_collision_layer, vec2 velocity) {
-	result->hit_layer_mask |= other_collision_layer;
-
+static void update_sweep_result(Hit *result, Hit hit, vec2 velocity) {
 	if (hit.time < result->time) {
 		*result = hit;
 	} else if (hit.time == result->time) {
@@ -154,7 +152,7 @@ static Hit sweep_static_bodies(Body *body, vec2 velocity) {
 		}
 
 		hit.other_id = i;
-		update_sweep_result(&result, hit, static_body->collision_layer, velocity);
+		update_sweep_result(&result, hit, velocity);
 	}
 
 	return result;
@@ -180,7 +178,7 @@ static Hit sweep_bodies(Body *body, vec2 velocity) {
 		}
 
 		hit.other_id = i;
-		update_sweep_result(&result, hit, other->collision_layer, velocity);
+		update_sweep_result(&result, hit, velocity);
 	}
 
 	return result;
