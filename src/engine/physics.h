@@ -38,7 +38,6 @@ struct hit {
 	vec2 position;
 	vec2 normal;
 	bool is_hit;
-	u8 hit_layer_mask;
 };
 
 void physics_init(void);
