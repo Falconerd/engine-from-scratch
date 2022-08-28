@@ -267,14 +267,13 @@ Body *physics_body_get(usize index) {
 	return array_list_get(state.body_list, index);
 }
 
-usize physics_static_body_create(vec2 position, vec2 size, u8 collision_layer, u8 collision_mask) {
+usize physics_static_body_create(vec2 position, vec2 size, u8 collision_layer) {
 	Static_Body static_body = {
 		.aabb = {
 			.position = { position[0], position[1] },
 			.half_size = { size[0] * 0.5, size[1] * 0.5 },
 		},
 		.collision_layer = collision_layer,
-		.collision_mask = collision_mask,
 	};
 
 	if (array_list_append(state.static_body_list, &static_body) == (usize)-1)
