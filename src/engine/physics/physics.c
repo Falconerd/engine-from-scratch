@@ -116,23 +116,28 @@ void physics_init(void) {
 	tick_rate = 1.f / iterations;
 }
 
-static Hit aabb_sweep_aabb(AABB a, AABB b, vec2 velocity) {
+static void update_sweep_result(Hit *result, usize other_id, AABB a, AABB b, vec2 velocity, u8 a_collision_mask, u8 b_collision_layer) {
+	if ((a_collision_mask & b_collision_layer) == 0) {
+		return;
+	}
+
 	AABB sum_aabb = b;
 	vec2_add(sum_aabb.half_size, sum_aabb.half_size, a.half_size);
 
-	return ray_intersect_aabb(a.position, velocity, sum_aabb);
-}
+	Hit hit = ray_intersect_aabb(a.position, velocity, sum_aabb);
 
-static void update_sweep_result(Hit *result, Hit hit, vec2 velocity) {
-	if (hit.time < result->time) {
-		*result = hit;
-	} else if (hit.time == result->time) {
-		// Solve highest velocity axis first.
-		if (fabsf(velocity[0]) > fabsf(velocity[1]) && hit.normal[0] != 0) {
+	if (hit.is_hit) {
+		if (hit.time < result->time) {
 			*result = hit;
-		} else if (fabsf(velocity[1]) > fabsf(velocity[0]) && hit.normal[1] != 0) {
-			*result = hit;
+		} else if (hit.time == result->time) {
+			// Solve highest velocity axis first.
+			if (fabsf(velocity[0]) > fabsf(velocity[1]) && hit.normal[0] != 0) {
+				*result = hit;
+			} else if (fabsf(velocity[1]) > fabsf(velocity[0]) && hit.normal[1] != 0) {
+				*result = hit;
+			}
 		}
+		result->other_id = other_id;
 	}
 }
 
@@ -142,17 +147,7 @@ static Hit sweep_static_bodies(Body *body, vec2 velocity) {
 	for (u32 i = 0; i < state.static_body_list->len; ++i) {
 		Static_Body *static_body = physics_static_body_get(i);
 
-		if ((body->collision_mask & static_body->collision_layer) == 0) {
-			continue;
-		}
-
-		Hit hit = aabb_sweep_aabb(body->aabb, static_body->aabb, velocity);
-		if (!hit.is_hit) {
-			continue;
-		}
-
-		hit.other_id = i;
-		update_sweep_result(&result, hit, velocity);
+		update_sweep_result(&result, i, body->aabb, static_body->aabb, velocity, body->collision_mask, static_body->collision_layer);
 	}
 
 	return result;
@@ -168,17 +163,7 @@ static Hit sweep_bodies(Body *body, vec2 velocity) {
 			continue;
 		}
 
-		if ((body->collision_mask & other->collision_mask) == 0) {
-			continue;
-		}
-
-		Hit hit = aabb_sweep_aabb(body->aabb, other->aabb, velocity);
-		if (!hit.is_hit) {
-			continue;
-		}
-
-		hit.other_id = i;
-		update_sweep_result(&result, hit, velocity);
+		update_sweep_result(&result, i, body->aabb, other->aabb, velocity, body->collision_mask, other->collision_layer);
 	}
 
 	return result;
