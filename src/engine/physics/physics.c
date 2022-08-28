@@ -199,22 +199,6 @@ static void sweep_response(Body *body, vec2 velocity) {
 	}
 }
 
-static bool aabb_intersect_aabb(AABB a, AABB b, vec2 penetration_vector) {
-	AABB aabb = aabb_minkowski_difference(b, a);
-	vec2 min, max;
-	aabb_min_max(min, max, aabb);
-
-	if (min[0] <= 0 && max[0] >= 0 && min[1] <= 0 && max[1] >= 0) {
-		if (penetration_vector) {
-			aabb_penetration_vector(penetration_vector, aabb);
-		}
-
-		return true;
-	}
-
-	return false;
-}
-
 static void stationary_response(Body *body) {
 	for (u32 i = 0; i < state.static_body_list->len; ++i) {
 		Static_Body *static_body = physics_static_body_get(i);
@@ -223,8 +207,13 @@ static void stationary_response(Body *body) {
 			continue;
 		}
 
-		vec2 penetration_vector;
-		if (aabb_intersect_aabb(body->aabb, static_body->aabb, penetration_vector)) {
+		AABB aabb = aabb_minkowski_difference(static_body->aabb, body->aabb);
+		vec2 min, max;
+		aabb_min_max(min, max, aabb);
+
+		if (min[0] <= 0 && max[0] >= 0 && min[1] <= 0 && max[1] >= 0) {
+			vec2 penetration_vector;
+			aabb_penetration_vector(penetration_vector, aabb);
 			vec2_add(body->aabb.position, body->aabb.position, penetration_vector);
 		}
 	}
