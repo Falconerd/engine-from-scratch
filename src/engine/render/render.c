@@ -28,8 +28,6 @@ static u32 shader_batch;
 static u32 texture_batch;
 static Array_List *list_batch;
 
-Batch_Vertex bv = {0};
-
 SDL_Window *render_init(void) {
 	/// RENDER WIDTH AND VIEWPORT WIDTH SHOULD BE DIFFERENT - PIXEL ART
 	SDL_Window *window = render_init_window(window_width, window_height);

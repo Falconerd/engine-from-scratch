@@ -14,7 +14,6 @@ typedef struct sprite_sheet {
 	u32 texture_id;
 } Sprite_Sheet;
 
-#define Batch_Vertex_Def
 typedef struct batch_vertex {
 	vec2 position;
 	vec2 uvs;
