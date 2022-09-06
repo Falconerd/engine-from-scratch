@@ -5,12 +5,6 @@
 
 #include "types.h"
 
-typedef struct render_state {
-	SDL_Window *window;
-	f32 width;
-	f32 height;
-} Render_State;
-
 SDL_Window *render_init(void);
 void render_begin(void);
 void render_end(SDL_Window *window);
