@@ -6,6 +6,7 @@
 #include "../global.h"
 #include "../render.h"
 #include "../array_list.h"
+#include "../util.h"
 #include "render_internal.h"
 
 static f32 window_width = 1920;
@@ -69,7 +70,7 @@ static void render_batch(Batch_Vertex *vertices, usize count, u32 texture_id) {
 	glDrawElements(GL_TRIANGLES, (count >> 2) * 6, GL_UNSIGNED_INT, NULL);
 }
 
-void append_quad(vec2 position, vec2 size, vec4 texture_coordinates, vec4 color) {
+static void append_quad(vec2 position, vec2 size, vec4 texture_coordinates, vec4 color) {
 	vec4 uvs = {0, 0, 1, 1};
 
 	if (texture_coordinates != NULL) {
@@ -101,8 +102,8 @@ void append_quad(vec2 position, vec2 size, vec4 texture_coordinates, vec4 color)
 	});
 }
 
-void render_end(SDL_Window *window) {
-	render_batch(list_batch->items, list_batch->len, texture_color);
+void render_end(SDL_Window *window, u32 batch_texture_id) {
+	render_batch(list_batch->items, list_batch->len, batch_texture_id);
 
 	SDL_GL_SwapWindow(window);
 }
@@ -169,6 +170,50 @@ void render_aabb(f32 *aabb, vec4 color) {
 	vec2 size;
 	vec2_scale(size, &aabb[2], 2);
 	render_quad_line(&aabb[0], size, color);
+}
+
+static void calculate_sprite_texture_coordinates(vec4 result, f32 row, f32 column, f32 texture_width, f32 texture_height, f32 cell_width, f32 cell_height) {
+	f32 w = 1.0 / (texture_width / cell_width);
+	f32 h = 1.0 / (texture_height / cell_height);
+	f32 x = column * w;
+	f32 y = row * h;
+	result[0] = x;
+	result[1] = y;
+	result[2] = x + w;
+	result[3] = y + h;
+}
+
+void render_sprite_sheet_init(Sprite_Sheet *sprite_sheet, const char *path, f32 cell_width, f32 cell_height) {
+	glGenTextures(1, &sprite_sheet->texture_id);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, sprite_sheet->texture_id);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);   
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	int width, height, channel_count;
+	u8 *image_data = stbi_load(path, &width, &height, &channel_count, 0);
+	if (!image_data) {
+		ERROR_EXIT("Failed to load image: %s\n", path);
+	}
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
+	stbi_image_free(image_data);
+
+	sprite_sheet->width = (f32)width;
+	sprite_sheet->height = (f32)height;
+	sprite_sheet->cell_width = cell_width;
+	sprite_sheet->cell_height = cell_height;
+}
+
+void render_sprite_sheet_frame(Sprite_Sheet *sprite_sheet, f32 row, f32 column, vec2 position) {
+	vec4 uvs;
+	calculate_sprite_texture_coordinates(uvs, row, column, sprite_sheet->width, sprite_sheet->height, sprite_sheet->cell_width, sprite_sheet->cell_height);
+
+	vec2 size = {sprite_sheet->cell_width, sprite_sheet->cell_height};
+	vec2 bottom_left = {position[0] - size[0] * 0.5, position[1] - size[1] * 0.5};
+	append_quad(bottom_left, size, uvs, (vec4){1, 1, 1, 1});
 }
 
 f32 render_get_scale() {
