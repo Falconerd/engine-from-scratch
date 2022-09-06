@@ -78,7 +78,7 @@ void enemy_on_hit_static(Body *self, Static_Body *other, Hit hit) {
 int main(int argc, char *argv[]) {
 	time_init(60);
 	config_init();
-	render_init();
+	SDL_Window *window = render_init();
 	physics_init();
 	entity_init();
 
@@ -89,8 +89,8 @@ int main(int argc, char *argv[]) {
 
 	usize player_id = entity_create((vec2){100, 800}, (vec2){100, 100}, (vec2){0, 0}, COLLISION_LAYER_PLAYER, player_mask, player_on_hit, player_on_hit_static);
 
-	f32 width = global.render.width;
-	f32 height = global.render.height;
+	i32 width, height;
+	SDL_GetWindowSize(window, &width, &height);
 
 	u32 static_body_a_id = physics_static_body_create((vec2){width * 0.5 - 25, height - 25}, (vec2){width - 50, 50}, COLLISION_LAYER_TERRAIN);
 	u32 static_body_b_id = physics_static_body_create((vec2){width - 25, height * 0.5 + 25}, (vec2){50, height - 50}, COLLISION_LAYER_TERRAIN);
@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
 		render_aabb((f32*)physics_body_get(entity_get(entity_a_id)->body_id), WHITE);
 		render_aabb((f32*)physics_body_get(entity_get(entity_b_id)->body_id), WHITE);
 
-		render_end();
+		render_end(window);
 
 		player_color[0] = 0;
 		player_color[2] = 1;

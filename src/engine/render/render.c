@@ -4,20 +4,32 @@
 #include "../render.h"
 #include "render_internal.h"
 
-static Render_State_Internal state = {0};
+static f32 window_width = 1920;
+static f32 window_height = 1080;
+static f32 render_width = 640;
+static f32 render_height = 360;
+static f32 scale = 3;
 
-void render_init(void) {
-	global.render.width = 1920;
-	global.render.height = 1080;
-	global.render.window = render_init_window(global.render.width, global.render.height);
+static u32 vao_quad;
+static u32 vbo_quad;
+static u32 ebo_quad;
+static u32 vao_line;
+static u32 vbo_line;
+static u32 shader_default;
+static u32 texture_color;
 
-	render_init_quad(&state.vao_quad, &state.vbo_quad, &state.ebo_quad);
-	render_init_line(&state.vao_line, &state.vbo_line);
-	render_init_shaders(&state);
-	render_init_color_texture(&state.texture_color);
+SDL_Window *render_init(void) {
+	SDL_Window *window = render_init_window(window_width, window_height);
+
+	render_init_quad(&vao_quad, &vbo_quad, &ebo_quad);
+	render_init_line(&vao_line, &vbo_line);
+	render_init_shaders(&shader_default, render_width, render_height);
+	render_init_color_texture(&texture_color);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	return window;
 }
 
 void render_begin(void) {
@@ -25,12 +37,12 @@ void render_begin(void) {
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void render_end(void) {
-	SDL_GL_SwapWindow(global.render.window);
+void render_end(SDL_Window *window) {
+	SDL_GL_SwapWindow(window);
 }
 
 void render_quad(vec2 pos, vec2 size, vec4 color) {
-	glUseProgram(state.shader_default);
+	glUseProgram(shader_default);
 
 	mat4x4 model;
 	mat4x4_identity(model);
@@ -38,19 +50,19 @@ void render_quad(vec2 pos, vec2 size, vec4 color) {
 	mat4x4_translate(model, pos[0], pos[1], 0);
 	mat4x4_scale_aniso(model, model, size[0], size[1], 1);
 
-	glUniformMatrix4fv(glGetUniformLocation(state.shader_default, "model"), 1, GL_FALSE, &model[0][0]);
-	glUniform4fv(glad_glGetUniformLocation(state.shader_default, "color"), 1, color);
+	glUniformMatrix4fv(glGetUniformLocation(shader_default, "model"), 1, GL_FALSE, &model[0][0]);
+	glUniform4fv(glad_glGetUniformLocation(shader_default, "color"), 1, color);
 
-	glBindVertexArray(state.vao_quad);
+	glBindVertexArray(vao_quad);
 
-	glBindTexture(GL_TEXTURE_2D, state.texture_color);
+	glBindTexture(GL_TEXTURE_2D, texture_color);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
 
 	glBindVertexArray(0);
 }
 
 void render_line_segment(vec2 start, vec2 end, vec4 color) {
-	glUseProgram(state.shader_default);
+	glUseProgram(shader_default);
 	glLineWidth(3);
 
 	f32 x = end[0] - start[0];
@@ -60,13 +72,13 @@ void render_line_segment(vec2 start, vec2 end, vec4 color) {
 	mat4x4 model;
 	mat4x4_translate(model, start[0], start[1], 0);
 
-	glUniformMatrix4fv(glGetUniformLocation(state.shader_default, "model"), 1, GL_FALSE, &model[0][0]);
-	glUniform4fv(glGetUniformLocation(state.shader_default, "color"), 1, color);
+	glUniformMatrix4fv(glGetUniformLocation(shader_default, "model"), 1, GL_FALSE, &model[0][0]);
+	glUniform4fv(glGetUniformLocation(shader_default, "color"), 1, color);
 
-	glBindTexture(GL_TEXTURE_2D, state.texture_color);
-	glBindVertexArray(state.vao_line);
+	glBindTexture(GL_TEXTURE_2D, texture_color);
+	glBindVertexArray(vao_line);
 
-	glBindBuffer(GL_ARRAY_BUFFER, state.vbo_line);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_line);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(line), line);
 	glDrawArrays(GL_LINES, 0, 2);
 
