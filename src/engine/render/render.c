@@ -105,3 +105,6 @@ void render_aabb(f32 *aabb, vec4 color) {
 	render_quad_line(&aabb[0], size, color);
 }
 
+f32 render_get_scale() {
+	return scale;
+}

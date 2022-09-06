@@ -19,3 +19,4 @@ void render_quad_line(vec2 pos, vec2 size, vec4 color);
 void render_line_segment(vec2 start, vec2 end, vec4 color);
 void render_aabb(f32 *aabb, vec4 color);
 
+f32 render_get_scale();
