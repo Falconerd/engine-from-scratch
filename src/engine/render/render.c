@@ -8,11 +8,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-f32 window_width = 1920;
-f32 window_height = 1080;
-f32 render_width = 640;
-f32 render_height = 360;
-f32 scale = 3;
+static f32 window_width = 1920;
+static f32 window_height = 1080;
+static f32 render_width = 640;
+static f32 render_height = 360;
+static f32 scale = 3;
 
 static u32 vao_quad;
 static u32 vbo_quad;
