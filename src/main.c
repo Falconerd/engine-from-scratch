@@ -1,6 +1,8 @@
+#include "engine/render.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <time.h>
 #include <glad/glad.h>
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
@@ -72,6 +74,8 @@ void enemy_on_hit_static(Body *self, Static_Body *other, Hit hit) {
 }
 
 int main(int argc, char *argv[]) {
+	srand(time(NULL));
+
 	time_init(60);
 	config_init();
 	SDL_Window *window = render_init();
@@ -137,6 +141,15 @@ int main(int argc, char *argv[]) {
 
 		render_aabb((f32*)physics_body_get(entity_get(entity_a_id)->body_id), WHITE);
 		render_aabb((f32*)physics_body_get(entity_get(entity_b_id)->body_id), WHITE);
+
+		for (u32 i = 0; i < 10000; ++i) {
+			vec4 color = {
+				(rand() % 255) / 255.0,
+				(rand() % 255) / 255.0,
+				(rand() % 255) / 255.0,
+				(rand() % 255) / 255.0};
+			append_quad((vec2){rand() % 640, rand() % 360}, (vec2){rand() % 100, rand() % 100}, NULL, color);
+		}
 
 		render_end(window);
 
