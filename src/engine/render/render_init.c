@@ -20,8 +20,8 @@ SDL_Window *render_init_window(u32 width, u32 height) {
 		"MyGame",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
-		global.render.width,
-		global.render.height,
+		width,
+		height,
 		SDL_WINDOW_OPENGL
 	);
 
@@ -42,17 +42,28 @@ SDL_Window *render_init_window(u32 width, u32 height) {
 	return window;
 }
 
-void render_init_shaders(Render_State_Internal *state) {
-	state->shader_default = render_shader_create("./shaders/default.vert", "./shaders/default.frag");
+void render_init_shaders(u32 *shader_default, u32 *shader_batch, f32 render_width, f32 render_height) {
+	*shader_default = render_shader_create("./shaders/default.vert", "./shaders/default.frag");
 
-	mat4x4_ortho(state->projection, 0, global.render.width, 0, global.render.height, -2, 2);
+	mat4x4 projection;
+	mat4x4_ortho(projection, 0, render_width, 0, render_height, -2, 2);
 
-	glUseProgram(state->shader_default);
+	glUseProgram(*shader_default);
 	glUniformMatrix4fv(
-		glGetUniformLocation(state->shader_default, "projection"),
+		glGetUniformLocation(*shader_default, "projection"),
 		1,
 		GL_FALSE,
-		&state->projection[0][0]
+		&projection[0][0]
+	);
+
+	*shader_batch = render_shader_create("shaders/batch_quad_vert.glsl", "shaders/batch_quad_frag.glsl");
+
+	glUseProgram(*shader_batch);
+	glUniformMatrix4fv(
+		glGetUniformLocation(*shader_batch, "projection"),
+		1,
+		GL_FALSE,
+		&projection[0][0]
 	);
 }
 
@@ -101,6 +112,41 @@ void render_init_quad(u32 *vao, u32 *vbo, u32 *ebo) {
 	glEnableVertexAttribArray(1);
 
 	glBindVertexArray(0);
+}
+
+void render_init_batch_quads(u32 *vao, u32 *vbo, u32 *ebo) {
+	glGenVertexArrays(1, vao);
+	glBindVertexArray(*vao);
+
+	u32 indices[MAX_BATCH_ELEMENTS];
+	for (u32 i = 0, offset = 0; i < MAX_BATCH_ELEMENTS; i += 6, offset += 4) {
+		indices[i + 0] = offset + 0;
+		indices[i + 1] = offset + 1;
+		indices[i + 2] = offset + 2;
+		indices[i + 3] = offset + 2;
+		indices[i + 4] = offset + 3;
+		indices[i + 5] = offset + 0;
+	}
+
+	glGenBuffers(1, vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, *vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(f32) * MAX_BATCH_VERTICES * 4, NULL, GL_DYNAMIC_DRAW);
+
+	// [x, y], [u, v], [r, g, b, a]
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Batch_Vertex), (void*)offsetof(Batch_Vertex, position));
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Batch_Vertex), (void*)offsetof(Batch_Vertex, uvs));
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(Batch_Vertex), (void*)offsetof(Batch_Vertex, color));
+
+	glGenBuffers(1, ebo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void render_init_line(u32 *vao, u32 *vbo) {
