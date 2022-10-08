@@ -103,6 +103,17 @@ int main(int argc, char *argv[]) {
 	Sprite_Sheet sprite_sheet_player;
 	render_sprite_sheet_init(&sprite_sheet_player, "assets/player.png", 24, 24);
 
+	Sprite_Animation_Definition player_walk = {
+		.sprite_sheet = &sprite_sheet_player,
+		.frame_count = 4,
+		.frames = {
+			{ 0.15, 0, 1 },
+			{ 0.15, 1, 1 },
+			{ 0.15, 2, 1 },
+			{ 0.15, 3, 1 },
+		}
+	};
+
 	while (!should_quit) {
 		time_update();
 
@@ -141,6 +152,8 @@ int main(int argc, char *argv[]) {
 
 		render_aabb((f32*)physics_body_get(entity_get(entity_a_id)->body_id), WHITE);
 		render_aabb((f32*)physics_body_get(entity_get(entity_b_id)->body_id), WHITE);
+
+		entity_render();
 
 		render_sprite_sheet_frame(&sprite_sheet_player, 1, 2, (vec2){100, 100});
 		render_sprite_sheet_frame(&sprite_sheet_player, 0, 4, (vec2){200, 200});

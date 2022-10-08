@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 #include <SDL2/SDL.h>
 #include <linmath.h>
 
