@@ -5,11 +5,10 @@
 #include "physics.h"
 #include "types.h"
 #include "render.h"
-#include "animation.h"
 
 typedef struct entity {
 	usize body_id;
-	Animation animation;
+	usize animation_id;
 	bool is_active;
 } Entity;
 
