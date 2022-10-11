@@ -128,9 +128,6 @@ int main(int argc, char *argv[]) {
 	u32 static_body_d_id = physics_static_body_create((vec2){12.5, height * 0.5 - 12.5}, (vec2){25, height - 25}, COLLISION_LAYER_TERRAIN);
 	u32 static_body_e_id = physics_static_body_create((vec2){width * 0.5, height * 0.5}, (vec2){62.5, 62.5}, COLLISION_LAYER_TERRAIN);
 
-	usize entity_a_id = entity_create((vec2){200, 200}, (vec2){25, 25}, (vec2){400, 0}, COLLISION_LAYER_ENEMY, enemy_mask, false, NULL, enemy_large_on_hit_static);
-	usize entity_b_id = entity_create((vec2){300, 300}, (vec2){25, 25}, (vec2){400, 0}, 0, enemy_mask, false, NULL, enemy_large_on_hit_static);
-
 	usize entity_fire = entity_create((vec2){370, 50}, (vec2){25, 25}, (vec2){0}, 0, fire_mask, true, fire_on_hit, NULL);
 
 	Sprite_Sheet sprite_sheet_player;
@@ -193,6 +190,8 @@ int main(int argc, char *argv[]) {
 			if (spawn_timer <= 0) {
 				spawn_timer = (f32)((rand() % 200) + 200) / 100.f;
 
+				spawn_timer *= 0.2;
+
 				bool is_flipped = rand() % 100 >= 50;
 				bool is_small_entity = rand() % 100 > 18;
 
@@ -210,10 +209,12 @@ int main(int argc, char *argv[]) {
 		for (usize i = 0; i < entity_count(); ++i) {
 			Entity *entity = entity_get(i);
 			Body *body = physics_body_get(entity->body_id);
-			if (body->is_active) {
-				render_aabb((f32*)body, YELLOW);
-			} else {
+			if (body->is_kinematic) {
+				render_aabb((f32*)body, CYAN);
+			} else if (!body->is_active) {
 				render_aabb((f32*)body, RED);
+			} else {
+				render_aabb((f32*)body, YELLOW);
 			}
 		}
 
