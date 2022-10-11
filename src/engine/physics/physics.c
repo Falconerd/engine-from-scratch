@@ -225,9 +225,15 @@ void physics_update(void) {
 	for (u32 i = 0; i < state.body_list->len; ++i) {
 		body = array_list_get(state.body_list, i);
 
-		body->velocity[1] += state.gravity;
-		if (state.terminal_velocity > body->velocity[1]) {
-			body->velocity[1] = state.terminal_velocity;
+		if (!body->is_active) {
+			continue;
+		}
+
+		if (!body->is_kinematic) {
+			body->velocity[1] += state.gravity;
+			if (state.terminal_velocity > body->velocity[1]) {
+				body->velocity[1] = state.terminal_velocity;
+			}
 		}
 
 		body->velocity[0] += body->acceleration[0];
@@ -243,7 +249,9 @@ void physics_update(void) {
 	}
 }
 
-usize physics_body_create(vec2 position, vec2 size, vec2 velocity, u8 collision_layer, u8 collision_mask, On_Hit on_hit, On_Hit_Static on_hit_static) {
+usize physics_body_create(vec2 position, vec2 size, vec2 velocity, u8 collision_layer, u8 collision_mask, bool is_kinematic, On_Hit on_hit, On_Hit_Static on_hit_static) {
+	usize id = state.body_list->len;
+
 	Body body = {
 		.aabb = {
 			.position = { position[0], position[1] },
@@ -254,12 +262,27 @@ usize physics_body_create(vec2 position, vec2 size, vec2 velocity, u8 collision_
 		.collision_mask = collision_mask,
 		.on_hit = on_hit,
 		.on_hit_static = on_hit_static,
+		.is_kinematic = is_kinematic,
+		.is_active = true,
 	};
 
-	if (array_list_append(state.body_list, &body) == (usize)-1)
-		ERROR_EXIT("Could not append body to list\n");
+	// Find inactive Body.
+	for (usize i = 0; i < state.body_list->len; ++i) {
+		Body *body = array_list_get(state.body_list, i);
+		if (!body->is_active) {
+			id = i;
+			break;
+		}
+	}
 
-	return state.body_list->len - 1;
+	if (id == state.body_list->len) {
+		if (array_list_append(state.body_list, &body) == (usize)-1)
+			ERROR_EXIT("Could not append body to list\n");
+	} else {
+		((Body*)state.body_list->items)[id] = body;
+	}
+
+	return id;
 }
 
 Body *physics_body_get(usize index) {
