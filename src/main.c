@@ -92,9 +92,11 @@ void fire_on_hit(Body *self, Body *other, Hit hit) {
 	if (other->collision_layer == COLLISION_LAYER_ENEMY) {
 		for (usize i = 0; i < entity_count(); ++i) {
 			Entity *entity = entity_get(i);
+
 			if (entity->body_id == hit.other_id) {
 				Body *body = physics_body_get(entity->body_id);
 				body->is_active = false;
+				entity->is_active = false;
 				break;
 			}
 		}
@@ -209,12 +211,11 @@ int main(int argc, char *argv[]) {
 		for (usize i = 0; i < entity_count(); ++i) {
 			Entity *entity = entity_get(i);
 			Body *body = physics_body_get(entity->body_id);
-			if (body->is_kinematic) {
-				render_aabb((f32*)body, CYAN);
-			} else if (!body->is_active) {
-				render_aabb((f32*)body, RED);
+
+			if (body->is_active) {
+				render_aabb((f32*)body, TURQUOISE);
 			} else {
-				render_aabb((f32*)body, YELLOW);
+				render_aabb((f32*)body, RED);
 			}
 		}
 

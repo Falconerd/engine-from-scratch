@@ -217,6 +217,27 @@ static void stationary_response(Body *body) {
 			vec2_add(body->aabb.position, body->aabb.position, penetration_vector);
 		}
 	}
+
+	// Check for on-hit events.
+	for (usize i = 0; i < state.body_list->len; ++i) {
+		Body *other = physics_body_get(i);
+
+		if (!body->on_hit) {
+			continue;
+		}
+
+		if ((body->collision_mask & other->collision_layer) == 0) {
+			continue;
+		}
+
+		AABB aabb = aabb_minkowski_difference(other->aabb, body->aabb);
+		vec2 min, max;
+		aabb_min_max(min, max, aabb);
+
+		if (min[0] <= 0 && max[0] >= 0 && min[1] <= 0 && max[1] >= 0) {
+			body->on_hit(body, other, (Hit){.is_hit = true, .other_id = i});
+		}
+	}
 }
 
 void physics_update(void) {
@@ -252,7 +273,24 @@ void physics_update(void) {
 usize physics_body_create(vec2 position, vec2 size, vec2 velocity, u8 collision_layer, u8 collision_mask, bool is_kinematic, On_Hit on_hit, On_Hit_Static on_hit_static) {
 	usize id = state.body_list->len;
 
-	Body body = {
+	// Find inactive Body.
+	for (usize i = 0; i < state.body_list->len; ++i) {
+		Body *body = array_list_get(state.body_list, i);
+		if (!body->is_active) {
+			id = i;
+			break;
+		}
+	}
+
+	if (id == state.body_list->len) {
+		if (array_list_append(state.body_list, &(Body){0}) == (usize)-1) {
+			ERROR_EXIT("Could not append body to list\n");
+		}
+	}
+
+	Body *body = physics_body_get(id);
+
+	*body = (Body){
 		.aabb = {
 			.position = { position[0], position[1] },
 			.half_size = { size[0] * 0.5, size[1] * 0.5 },
@@ -265,22 +303,6 @@ usize physics_body_create(vec2 position, vec2 size, vec2 velocity, u8 collision_
 		.is_kinematic = is_kinematic,
 		.is_active = true,
 	};
-
-	// Find inactive Body.
-	for (usize i = 0; i < state.body_list->len; ++i) {
-		Body *body = array_list_get(state.body_list, i);
-		if (!body->is_active) {
-			id = i;
-			break;
-		}
-	}
-
-	if (id == state.body_list->len) {
-		if (array_list_append(state.body_list, &body) == (usize)-1)
-			ERROR_EXIT("Could not append body to list\n");
-	} else {
-		((Body*)state.body_list->items)[id] = body;
-	}
 
 	return id;
 }
