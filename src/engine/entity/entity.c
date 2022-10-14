@@ -20,6 +20,8 @@ usize entity_create(vec2 position, vec2 size, vec2 velocity, u8 collision_layer,
 		}
 	}
 
+	printf("id: %zu\n", id);
+
 	if (id == entity_list->len) {
 		if (array_list_append(entity_list, &(Entity){0}) == (usize)-1) {
 			ERROR_EXIT("Could not append entity to list\n");

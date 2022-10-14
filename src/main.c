@@ -16,7 +16,7 @@
 #include "engine/animation.h"
 
 static const f32 SPEED_ENEMY_LARGE = 200;
-static const f32 SPEED_ENEMY_SMALL = 400;
+static const f32 SPEED_ENEMY_SMALL = 4000;
 static const f32 HEALTH_ENEMY_LARGE = 7;
 static const f32 HEALTH_ENEMY_SMALL = 3;
 
@@ -202,7 +202,28 @@ int main(int argc, char *argv[]) {
 				usize entity_id = entity_create((vec2){spawn_x, 200}, (vec2){20, 20}, (vec2){0, 0}, COLLISION_LAYER_ENEMY, enemy_mask, false, NULL, enemy_small_on_hit_static);
 				Entity *entity = entity_get(entity_id);
 				Body *body = physics_body_get(entity->body_id);
-				body->velocity[0] = is_flipped ? -400 : 400;
+				body->velocity[0] = is_flipped ? -SPEED_ENEMY_SMALL : SPEED_ENEMY_SMALL;
+
+				{
+					usize entity_id = entity_create((vec2){spawn_x, 200}, (vec2){20, 20}, (vec2){0, 0}, COLLISION_LAYER_ENEMY, enemy_mask, false, NULL, enemy_small_on_hit_static);
+					Entity *entity = entity_get(entity_id);
+					Body *body = physics_body_get(entity->body_id);
+					body->velocity[0] = is_flipped ? -(SPEED_ENEMY_SMALL * ((rand() % 100) * 0.01) + 100) : SPEED_ENEMY_SMALL * ((rand() % 100) * 0.01) + 100;
+				}
+
+				{
+					usize entity_id = entity_create((vec2){spawn_x, 200}, (vec2){20, 20}, (vec2){0, 0}, COLLISION_LAYER_ENEMY, enemy_mask, false, NULL, enemy_small_on_hit_static);
+					Entity *entity = entity_get(entity_id);
+					Body *body = physics_body_get(entity->body_id);
+					body->velocity[0] = is_flipped ? -(SPEED_ENEMY_SMALL * ((rand() % 100) * 0.01) + 100) : SPEED_ENEMY_SMALL * ((rand() % 100) * 0.01) + 100;
+				}
+
+				{
+					usize entity_id = entity_create((vec2){spawn_x, 200}, (vec2){20, 20}, (vec2){0, 0}, COLLISION_LAYER_ENEMY, enemy_mask, false, NULL, enemy_small_on_hit_static);
+					Entity *entity = entity_get(entity_id);
+					Body *body = physics_body_get(entity->body_id);
+					body->velocity[0] = is_flipped ? -(SPEED_ENEMY_SMALL * ((rand() % 100) * 0.01) + 100) : SPEED_ENEMY_SMALL * ((rand() % 100) * 0.01) + 100;
+				}
 			}
 		}
 
