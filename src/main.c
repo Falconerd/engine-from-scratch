@@ -54,6 +54,7 @@ static void input_handle(Body *body_player) {
 	if (global.input.up && player_is_grounded) {
 		player_is_grounded = false;
 		vely = 2000;
+		audio_sound_play(SOUND_JUMP);
 	}
 
 	body_player->velocity[0] = velx;
@@ -117,6 +118,7 @@ int main(int argc, char *argv[]) {
 	animation_init();
 	audio_init();
 
+	audio_sound_load(&SOUND_JUMP, "assets/jump.wav");
 	audio_music_load(&MUSIC_STAGE_1, "assets/breezys_mega_quest_2_stage_1.mp3");
 	audio_music_play(MUSIC_STAGE_1);
 
