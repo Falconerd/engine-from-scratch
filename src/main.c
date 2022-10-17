@@ -4,6 +4,7 @@
 #include <glad/glad.h>
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 
 #include "engine/global.h"
 #include "engine/config.h"
@@ -14,9 +15,13 @@
 #include "engine/entity.h"
 #include "engine/render.h"
 #include "engine/animation.h"
+#include "engine/audio.h"
+
+static Mix_Music *MUSIC_STAGE_1;
+static Mix_Chunk *SOUND_JUMP;
 
 static const f32 SPEED_ENEMY_LARGE = 200;
-static const f32 SPEED_ENEMY_SMALL = 4000;
+static const f32 SPEED_ENEMY_SMALL = 400;
 static const f32 HEALTH_ENEMY_LARGE = 7;
 static const f32 HEALTH_ENEMY_SMALL = 3;
 
@@ -110,6 +115,10 @@ int main(int argc, char *argv[]) {
 	physics_init();
 	entity_init();
 	animation_init();
+	audio_init();
+
+	audio_music_load(&MUSIC_STAGE_1, "assets/breezys_mega_quest_2_stage_1.mp3");
+	audio_music_play(MUSIC_STAGE_1);
 
 	SDL_ShowCursor(false);
 
@@ -203,27 +212,6 @@ int main(int argc, char *argv[]) {
 				Entity *entity = entity_get(entity_id);
 				Body *body = physics_body_get(entity->body_id);
 				body->velocity[0] = is_flipped ? -SPEED_ENEMY_SMALL : SPEED_ENEMY_SMALL;
-
-				{
-					usize entity_id = entity_create((vec2){spawn_x, 200}, (vec2){20, 20}, (vec2){0, 0}, COLLISION_LAYER_ENEMY, enemy_mask, false, NULL, enemy_small_on_hit_static);
-					Entity *entity = entity_get(entity_id);
-					Body *body = physics_body_get(entity->body_id);
-					body->velocity[0] = is_flipped ? -(SPEED_ENEMY_SMALL * ((rand() % 100) * 0.01) + 100) : SPEED_ENEMY_SMALL * ((rand() % 100) * 0.01) + 100;
-				}
-
-				{
-					usize entity_id = entity_create((vec2){spawn_x, 200}, (vec2){20, 20}, (vec2){0, 0}, COLLISION_LAYER_ENEMY, enemy_mask, false, NULL, enemy_small_on_hit_static);
-					Entity *entity = entity_get(entity_id);
-					Body *body = physics_body_get(entity->body_id);
-					body->velocity[0] = is_flipped ? -(SPEED_ENEMY_SMALL * ((rand() % 100) * 0.01) + 100) : SPEED_ENEMY_SMALL * ((rand() % 100) * 0.01) + 100;
-				}
-
-				{
-					usize entity_id = entity_create((vec2){spawn_x, 200}, (vec2){20, 20}, (vec2){0, 0}, COLLISION_LAYER_ENEMY, enemy_mask, false, NULL, enemy_small_on_hit_static);
-					Entity *entity = entity_get(entity_id);
-					Body *body = physics_body_get(entity->body_id);
-					body->velocity[0] = is_flipped ? -(SPEED_ENEMY_SMALL * ((rand() % 100) * 0.01) + 100) : SPEED_ENEMY_SMALL * ((rand() % 100) * 0.01) + 100;
-				}
 			}
 		}
 
