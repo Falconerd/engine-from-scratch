@@ -4,8 +4,8 @@
 #include "../array_list.h"
 #include "../animation.h"
 
-Array_List *animation_definition_storage;
-Array_List *animation_storage;
+static Array_List *animation_definition_storage;
+static Array_List *animation_storage;
 
 void animation_init(void) {
 	animation_definition_storage = array_list_create(sizeof(Animation_Definition), 0);
@@ -16,7 +16,6 @@ usize animation_definition_create(Sprite_Sheet *sprite_sheet, f32 *durations, u8
 	assert(frame_count <= MAX_FRAMES);
 
 	Animation_Definition def = {0};
-
 	def.sprite_sheet = sprite_sheet;
 	def.frame_count = frame_count;
 
@@ -93,5 +92,11 @@ void animation_update(f32 dt) {
 			animation->current_frame_time = adef->frames[animation->current_frame_index].duration;
 		}
 	}
+}
+
+void animation_render(Animation *animation, vec2 position, vec4 color) {
+	Animation_Definition *adef = animation->definition;
+	Animation_Frame *aframe = &adef->frames[animation->current_frame_index];
+	render_sprite_sheet_frame(adef->sprite_sheet, aframe->row, aframe->column, position, animation->is_flipped, WHITE, adef->sprite_sheet->texture_slot);
 }
 

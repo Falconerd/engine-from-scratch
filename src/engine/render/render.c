@@ -184,6 +184,8 @@ f32 render_get_scale() {
 	return scale;
 }
 
+static u32 next_sprite_sheet_slot = 1;
+
 void render_sprite_sheet_init(Sprite_Sheet *sprite_sheet, const char *path, f32 cell_width, f32 cell_height) {
 	glGenTextures(1, &sprite_sheet->texture_id);
 	glActiveTexture(GL_TEXTURE0);
@@ -206,6 +208,7 @@ void render_sprite_sheet_init(Sprite_Sheet *sprite_sheet, const char *path, f32 
 	sprite_sheet->height = (f32)height;
 	sprite_sheet->cell_width = cell_width;
 	sprite_sheet->cell_height = cell_height;
+	sprite_sheet->texture_slot = next_sprite_sheet_slot++;
 }
 
 static void calculate_sprite_texture_coordinates(vec4 result, f32 row, f32 column, f32 texture_width, f32 texture_height, f32 cell_width, f32 cell_height) {

@@ -8,7 +8,7 @@ void entity_init(void) {
 	entity_list = array_list_create(sizeof(Entity), 0);
 }
 
-usize entity_create(vec2 position, vec2 size, vec2 velocity, u8 collision_layer, u8 collision_mask, bool is_kinematic, On_Hit on_hit, On_Hit_Static on_hit_static) {
+usize entity_create(vec2 position, vec2 size, vec2 sprite_offset, vec2 velocity, u8 collision_layer, u8 collision_mask, bool is_kinematic, On_Hit on_hit, On_Hit_Static on_hit_static) {
 	usize id = entity_list->len;
 
 	// Find inactive Entity.
@@ -32,6 +32,7 @@ usize entity_create(vec2 position, vec2 size, vec2 velocity, u8 collision_layer,
 		.is_active = true,
 		.animation_id = (usize)-1,
 		.body_id = physics_body_create(position, size, velocity, collision_layer, collision_mask, is_kinematic, on_hit, on_hit_static),
+		.sprite_offset = { sprite_offset[0], sprite_offset[1] },
 	};
 
 	return id;
@@ -40,6 +41,23 @@ usize entity_create(vec2 position, vec2 size, vec2 velocity, u8 collision_layer,
 Entity *entity_get(usize id) {
 	return array_list_get(entity_list, id);
 }
-usize entity_count() {
+
+usize entity_count(void) {
 	return entity_list->len;
+}
+
+void entity_reset(void) {
+	entity_list->len = 0;
+}
+
+Entity *entity_by_body_id(usize body_id) {
+	// Just use linear search for this tiny game.
+	for (usize i = 0; i < entity_list->len; ++i) {
+		Entity *entity = entity_get(i);
+		if (entity->body_id == body_id) {
+			return entity;
+		}
+	}
+
+	return NULL;
 }

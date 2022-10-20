@@ -20,6 +20,7 @@ typedef struct sprite_sheet {
 	f32 cell_width;
 	f32 cell_height;
 	u32 texture_id;
+	u32 texture_slot;
 } Sprite_Sheet;
 
 #define MAX_BATCH_QUADS 10000
@@ -37,3 +38,4 @@ f32 render_get_scale();
 
 void render_sprite_sheet_init(Sprite_Sheet *sprite_sheet, const char *path, f32 cell_width, f32 cell_height);
 void render_sprite_sheet_frame(Sprite_Sheet *sprite_sheet, f32 row, f32 column, vec2 position, bool is_flipped, vec4 color, f32 texture_slot);
+
