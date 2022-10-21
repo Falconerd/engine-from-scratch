@@ -28,10 +28,11 @@ static Sprite_Sheet sprite_sheet_enemy_small;
 static Sprite_Sheet sprite_sheet_enemy_large;
 static Sprite_Sheet sprite_sheet_props;
 
-static const f32 SPEED_PLAYER = 350;
+static const f32 SPEED_PLAYER = 250;
 static const f32 JUMP_VELOCITY = 1350;
-static const f32 SPEED_ENEMY_LARGE = 200;
-static const f32 SPEED_ENEMY_SMALL = 200;
+static const f32 GROUNDED_TIME = 0.1;
+static const f32 SPEED_ENEMY_LARGE = 80;
+static const f32 SPEED_ENEMY_SMALL = 100;
 static const f32 HEALTH_ENEMY_LARGE = 7;
 static const f32 HEALTH_ENEMY_SMALL = 3;
 
@@ -99,9 +100,9 @@ static Projectile projectiles[PROJECTILE_TYPE_COUNT] = {
 
 // State
 static bool should_quit = false;
-static bool player_is_grounded = false;
 static f32 spawn_timer = 0;
 static f32 shoot_timer = 0;
+static f32 ground_timer = 0;
 static Weapon_Type current_weapon_type;
 
 void reset(void);
@@ -113,7 +114,7 @@ void player_on_hit(Body *self, Body *other, Hit hit) {
 
 void player_on_hit_static(Body *self, Static_Body *other, Hit hit) {
 	if (hit.normal[1] > 0) {
-		player_is_grounded = true;
+		ground_timer = GROUNDED_TIME;
 	}
 }
 
@@ -157,29 +158,36 @@ void projectile_on_hit(Body *self, Body *other, Hit hit) {
 
 void projectile_on_hit_static(Body *self, Static_Body *other, Hit hit) {
 	Entity *entity = entity_by_body_id(hit.self_id);
-	printf("e=>%zu", hit.self_id);
 	entity->is_active = false;
 	self->is_active = false;
 }
 
-static void input_handle(Body *body_player) {
+static void input_handle(Entity *player) {
 	if (global.input.escape) {
 		should_quit = true;
 	}
 
+	Body *body = physics_body_get(player->body_id);
+	Animation *walk_anim = animation_get(anim_player_walk_id);
+	Animation *idle_anim = animation_get(anim_player_idle_id);
+
 	f32 velx = 0;
-	f32 vely = body_player->velocity[1];
+	f32 vely = body->velocity[1];
 
 	if (global.input.right) {
 		velx += SPEED_PLAYER;
+		walk_anim->is_flipped = false;
+		idle_anim->is_flipped = false;
 	}
 
 	if (global.input.left) {
 		velx -= SPEED_PLAYER;
+		walk_anim->is_flipped = true;
+		idle_anim->is_flipped = true;
 	}
 
-	if (global.input.up && player_is_grounded) {
-		player_is_grounded = false;
+	if (global.input.up && ground_timer >= 0) {
+		ground_timer = -1;
 		vely = JUMP_VELOCITY;
 		audio_sound_play(SOUND_JUMP);
 	}
@@ -192,15 +200,17 @@ static void input_handle(Body *body_player) {
 			shoot_timer = weapon->cooldown;
 
 			vec2 pos;
-			vec2_add(pos, body_player->aabb.position, weapon->spawn_offset);
+			vec2_add(pos, body->aabb.position, weapon->spawn_offset);
 
-			Entity *e = entity_get(entity_create(pos, projectile->size, (vec2){0, 0}, (vec2){weapon->velocity, 0}, COLLISION_LAYER_PROJECTILE, projectile_mask, true, projectile_on_hit, projectile_on_hit_static));
+			f32 velocity = walk_anim->is_flipped ? -weapon->velocity : weapon->velocity;
+
+			Entity *e = entity_get(entity_create(pos, projectile->size, (vec2){0, 0}, (vec2){velocity, 0}, COLLISION_LAYER_PROJECTILE, projectile_mask, true, projectile_on_hit, projectile_on_hit_static));
 			e->animation_id = projectile->animation_id;
 		}
 	}
 
-	body_player->velocity[0] = velx;
-	body_player->velocity[1] = vely;
+	body->velocity[0] = velx;
+	body->velocity[1] = vely;
 }
 
 void spawn_enemy(bool is_small, bool is_enraged, bool is_flipped) {
@@ -350,26 +360,27 @@ int main(int argc, char *argv[]) {
 		Entity *player = entity_get(0);
 		Body *body_player = physics_body_get(player->body_id);
 
-		if (body_player->velocity[0] != 0 || (global.input.left != KS_UNPRESSED || global.input.right != KS_UNPRESSED)) {
+		if (body_player->velocity[0] != 0 || (global.input.left || global.input.right)) {
 			player->animation_id = anim_player_walk_id;
 		} else {
 			player->animation_id = anim_player_idle_id;
 		}
 
 		input_update();
-		input_handle(body_player);
+		input_handle(player);
 		physics_update();
 
 		animation_update(global.time.delta);
 
-		// Update shooting stuff.
+		// Update timers.
 		{
 			shoot_timer -= global.time.delta;
+			spawn_timer -= global.time.delta;
+			ground_timer -= global.time.delta;
 		}
 
 		// Spawn enemies.
 		{
-			spawn_timer -= global.time.delta;
 			if (spawn_timer <= 0) {
 				spawn_timer = (f32)((rand() % 200) + 200) / 100.f;
 
@@ -418,7 +429,9 @@ int main(int argc, char *argv[]) {
 
 			if (body->velocity[0] < 0) {
 				anim->is_flipped = true;
-			} else if (body->velocity[0] > 0) {
+			}
+
+			if (body->velocity[0] > 0) {
 				anim->is_flipped = false;
 			}
 

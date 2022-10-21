@@ -1,2 +1,3 @@
 -I/w/include
 -IC:\\work\\include
+-I./deps/include

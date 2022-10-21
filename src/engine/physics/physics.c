@@ -110,7 +110,7 @@ void physics_init(void) {
 	state.body_list = array_list_create(sizeof(Body), 0);
 	state.static_body_list = array_list_create(sizeof(Static_Body), 0);
 
-	state.gravity = -100;
+	state.gravity = -79;
 	state.terminal_velocity = -7000;
 
 	tick_rate = 1.f / iterations;
