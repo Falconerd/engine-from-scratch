@@ -4,7 +4,6 @@
 #include <linmath.h>
 #include "physics.h"
 #include "types.h"
-#include "render.h"
 
 typedef struct entity {
 	usize body_id;
