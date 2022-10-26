@@ -386,3 +386,7 @@ void physics_reset(void) {
 	state.static_body_list->len = 0;
 }
 
+void physics_body_destroy(usize body_id) {
+	Body *body = physics_body_get(body_id);
+	body->is_active = false;
+}

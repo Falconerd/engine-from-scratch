@@ -59,4 +59,5 @@ usize physics_body_count(void);
 usize physics_static_body_count(void);
 
 void physics_reset(void);
+void physics_body_destroy(usize body_id);
 

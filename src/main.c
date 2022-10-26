@@ -17,7 +17,7 @@
 #include "engine/animation.h"
 #include "engine/audio.h"
 
-#define DEBUG 0
+#define DEBUG 1
 
 static Mix_Music *MUSIC_STAGE_1;
 static Mix_Chunk *SOUND_JUMP;
@@ -152,7 +152,9 @@ void fire_on_hit(Body *self, Body *other, Hit hit) {
 
 void projectile_on_hit(Body *self, Body *other, Hit hit) {
 	if (other->collision_layer == COLLISION_LAYER_ENEMY) {
-		Entity *entity = entity_by_body_id(hit.other_id);
+		entity_damage(hit.other_id, 1);
+		entity_destroy(entity_id_by_body_id(hit.self_id));
+
 	}
 }
 
@@ -204,8 +206,7 @@ static void input_handle(Entity *player) {
 
 			f32 velocity = walk_anim->is_flipped ? -weapon->velocity : weapon->velocity;
 
-			Entity *e = entity_get(entity_create(pos, projectile->size, (vec2){0, 0}, (vec2){velocity, 0}, COLLISION_LAYER_PROJECTILE, projectile_mask, true, projectile_on_hit, projectile_on_hit_static));
-			e->animation_id = projectile->animation_id;
+			entity_create(pos, projectile->size, (vec2){0, 0}, (vec2){velocity, 0}, COLLISION_LAYER_PROJECTILE, projectile_mask, true, projectile->animation_id, projectile_on_hit, projectile_on_hit_static);
 		}
 	}
 
@@ -221,11 +222,10 @@ void spawn_enemy(bool is_small, bool is_enraged, bool is_flipped) {
 		speed *= 1.5;
 	}
 
-	usize entity_id;
 	Entity *entity;
 
 	if (is_small) {
-		entity_id = entity_create(
+		entity = entity_get(entity_create(
 			(vec2){spawn_x, render_height - 64},
 			(vec2){12, 12},
 			(vec2){0, 6},
@@ -233,12 +233,11 @@ void spawn_enemy(bool is_small, bool is_enraged, bool is_flipped) {
 			COLLISION_LAYER_ENEMY,
 			enemy_mask,
 			false,
+			anim_enemy_small_id,
 			NULL,
-			enemy_small_on_hit_static);
-		entity = entity_get(entity_id);
-		entity->animation_id = anim_enemy_small_id;
+			enemy_small_on_hit_static));
 	} else {
-		entity_id = entity_create(
+		entity = entity_get(entity_create(
 			(vec2){spawn_x, render_height - 64},
 			(vec2){20, 20},
 			(vec2){0, 10},
@@ -246,11 +245,11 @@ void spawn_enemy(bool is_small, bool is_enraged, bool is_flipped) {
 			COLLISION_LAYER_ENEMY,
 			enemy_mask,
 			false,
+			anim_enemy_large_id,
 			NULL,
-			enemy_large_on_hit_static);
-		entity = entity_get(entity_id);
-		entity->animation_id = anim_enemy_large_id;
+			enemy_large_on_hit_static));
 	}
+
 	Body *body = physics_body_get(entity->body_id);
 	body->velocity[0] = is_flipped ? -speed : speed;
 }
@@ -265,7 +264,7 @@ void reset(void) {
 	render_width = window_width / render_get_scale();
 	render_height = window_height / render_get_scale();
 
-	entity_create((vec2){100, 200}, (vec2){12, 12}, (vec2){0, 6}, (vec2){0, 0}, COLLISION_LAYER_PLAYER, player_mask, false, player_on_hit, player_on_hit_static);
+	entity_create((vec2){100, 200}, (vec2){12, 12}, (vec2){0, 6}, (vec2){0, 0}, COLLISION_LAYER_PLAYER, player_mask, false, (usize)-1, player_on_hit, player_on_hit_static);
 
 	// Init level.
 	{
@@ -286,7 +285,7 @@ void reset(void) {
 	Entity *player = entity_get(0);
 	player->animation_id = anim_player_idle_id;
 
-	entity_create((vec2){render_width * 0.5, -4}, (vec2){0, 0}, (vec2){64, 8}, (vec2){0}, 0, fire_mask, true, fire_on_hit, NULL);
+	entity_create((vec2){render_width * 0.5, -4}, (vec2){0, 0}, (vec2){64, 8}, (vec2){0}, 0, fire_mask, true, (usize)-1, fire_on_hit, NULL);
 
 	spawn_timer = 0;
 }
@@ -395,7 +394,7 @@ int main(int argc, char *argv[]) {
 
 		render_begin();
 
-		render_sprite_sheet_frame(&sprite_sheet_map, 0, 0, (vec2){320, 180}, false, WHITE, 2);
+		render_sprite_sheet_frame(&sprite_sheet_map, 0, 0, (vec2){320, 180}, false, (vec4){1, 1, 1, 0.2}, 2);
 
 #if DEBUG
 		for (usize i = 0; i < physics_body_count(); ++i) {
