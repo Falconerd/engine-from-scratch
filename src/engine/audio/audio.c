@@ -9,9 +9,9 @@ void audio_init(void) {
 	i32 audio_rate = 44100;
 	u16 audio_format = MIX_DEFAULT_FORMAT;
 	i32 audio_channels = 2;
-	i32 audio_buffers = 4096;
+	i32 audio_chunksize = 2048;
 
-	if (Mix_OpenAudio(audio_rate, audio_format, audio_channels, audio_buffers)) {
+	if (Mix_OpenAudio(audio_rate, audio_format, audio_channels, audio_chunksize)) {
 		ERROR_EXIT("SDL_Mixer error: OpenAudio: %s\n", Mix_GetError());
 	}
 }
