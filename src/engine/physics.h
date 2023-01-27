@@ -34,6 +34,7 @@ struct static_body {
 };
 
 struct hit {
+	usize self_id;
 	usize other_id;
 	f32 time;
 	vec2 position;
@@ -54,4 +55,9 @@ void aabb_penetration_vector(vec2 r, AABB aabb);
 void aabb_min_max(vec2 min, vec2 max, AABB aabb);
 Hit ray_intersect_aabb(vec2 position, vec2 magnitude, AABB aabb);
 
+usize physics_body_count(void);
+usize physics_static_body_count(void);
+
+void physics_reset(void);
+void physics_body_destroy(usize body_id);
 

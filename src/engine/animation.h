@@ -31,3 +31,5 @@ usize animation_create(usize animation_definition_id, bool does_loop);
 void animation_destroy(usize id);
 Animation *animation_get(usize id);
 void animation_update(f32 dt);
+void animation_render(Animation *animation, vec2 position, vec4 color);
+

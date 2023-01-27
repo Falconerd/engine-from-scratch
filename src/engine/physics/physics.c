@@ -110,13 +110,14 @@ void physics_init(void) {
 	state.body_list = array_list_create(sizeof(Body), 0);
 	state.static_body_list = array_list_create(sizeof(Static_Body), 0);
 
-	state.gravity = -100;
+	state.gravity = -79;
 	state.terminal_velocity = -7000;
 
 	tick_rate = 1.f / iterations;
 }
 
-static void update_sweep_result(Hit *result, Body *body, usize other_id, vec2 velocity) {
+static void update_sweep_result(Hit *result, usize id, usize other_id, vec2 velocity) {
+	Body *body = physics_body_get(id);
 	Body *other = physics_body_get(other_id);
 
 	if ((body->collision_mask & other->collision_layer) == 0) {
@@ -127,6 +128,9 @@ static void update_sweep_result(Hit *result, Body *body, usize other_id, vec2 ve
 	vec2_add(sum_aabb.half_size, sum_aabb.half_size, body->aabb.half_size);
 
 	Hit hit = ray_intersect_aabb(body->aabb.position, velocity, sum_aabb);
+	hit.self_id = id;
+	hit.other_id = other_id;
+
 	if (hit.is_hit) {
 		if (body->on_hit && (body->collision_mask & other->collision_layer) == 0) {
 			body->on_hit(body, other, hit);
@@ -147,7 +151,8 @@ static void update_sweep_result(Hit *result, Body *body, usize other_id, vec2 ve
 	}
 }
 
-static void update_sweep_result_static(Hit *result, Body *body, usize other_id, vec2 velocity) {
+static void update_sweep_result_static(Hit *result, usize id, usize other_id, vec2 velocity) {
+	Body *body = physics_body_get(id);
 	Static_Body *static_body = physics_static_body_get(other_id);
 
 	if ((body->collision_mask & static_body->collision_layer) == 0) {
@@ -158,6 +163,8 @@ static void update_sweep_result_static(Hit *result, Body *body, usize other_id, 
 	vec2_add(sum_aabb.half_size, sum_aabb.half_size, body->aabb.half_size);
 
 	Hit hit = ray_intersect_aabb(body->aabb.position, velocity, sum_aabb);
+	hit.self_id = id;
+
 	if (hit.is_hit) {
 		if (hit.time < result->time) {
 			*result = hit;
@@ -174,35 +181,37 @@ static void update_sweep_result_static(Hit *result, Body *body, usize other_id, 
 	}
 }
 
-static Hit sweep_static_bodies(Body *body, vec2 velocity) {
-	Hit result = {.time = 0xBEEF};
+static Hit sweep_static_bodies(usize id, vec2 velocity) {
+	Body *body = physics_body_get(id);
+	Hit result = {.self_id = id, .time = 0xBEEF};
 
 	for (u32 i = 0; i < state.static_body_list->len; ++i) {
-		update_sweep_result_static(&result, body, i, velocity);
+		update_sweep_result_static(&result, id, i, velocity);
 	}
 
 	return result;
 }
 
-static Hit sweep_bodies(Body *body, vec2 velocity) {
-	Hit result = {.time = 0xBEEF};
+static Hit sweep_bodies(usize id, vec2 velocity) {
+	Hit result = {.self_id = id, .time = 0xBEEF};
 
 	for (u32 i = 0; i < state.body_list->len; ++i) {
 		Body *other = physics_body_get(i);
 
-		if (body == other) {
+		if (id == i) {
 			continue;
 		}
 
-		update_sweep_result(&result, body, i, velocity);
+		update_sweep_result(&result, id, i, velocity);
 	}
 
 	return result;
 }
 
-static void sweep_response(Body *body, vec2 velocity) {
-	Hit hit = sweep_static_bodies(body, velocity);
-	Hit hit_moving = sweep_bodies(body, velocity);
+static void sweep_response(usize id, vec2 velocity) {
+	Hit hit = sweep_static_bodies(id, velocity);
+	Hit hit_moving = sweep_bodies(id, velocity);
+	Body *body = physics_body_get(id);
 
 	if (hit_moving.is_hit) {
 		if (body->on_hit != NULL) {
@@ -230,7 +239,9 @@ static void sweep_response(Body *body, vec2 velocity) {
 	}
 }
 
-static void stationary_response(Body *body) {
+static void stationary_response(usize id) {
+	Body *body = physics_body_get(id);
+
 	for (u32 i = 0; i < state.static_body_list->len; ++i) {
 		Static_Body *static_body = physics_static_body_get(i);
 
@@ -267,7 +278,7 @@ static void stationary_response(Body *body) {
 		aabb_min_max(min, max, aabb);
 
 		if (min[0] <= 0 && max[0] >= 0 && min[1] <= 0 && max[1] >= 0) {
-			body->on_hit(body, other, (Hit){.is_hit = true, .other_id = i});
+			body->on_hit(body, other, (Hit){.self_id = id, .is_hit = true, .other_id = i});
 		}
 	}
 }
@@ -296,8 +307,8 @@ void physics_update(void) {
 		vec2_scale(scaled_velocity, body->velocity, global.time.delta * tick_rate);
 
 		for (u32 j = 0; j < iterations; ++j) {
-			sweep_response(body, scaled_velocity);
-			stationary_response(body);
+			sweep_response(i, scaled_velocity);
+			stationary_response(i);
 		}
 	}
 }
@@ -362,3 +373,20 @@ Static_Body *physics_static_body_get(usize index) {
 	return array_list_get(state.static_body_list, index);
 }
 
+usize physics_body_count(void) {
+	return state.body_list->len;
+}
+
+usize physics_static_body_count(void) {
+	return state.static_body_list->len;
+}
+
+void physics_reset(void) {
+	state.body_list->len = 0;
+	state.static_body_list->len = 0;
+}
+
+void physics_body_destroy(usize body_id) {
+	Body *body = physics_body_get(body_id);
+	body->is_active = false;
+}
