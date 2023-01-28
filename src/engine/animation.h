@@ -17,7 +17,7 @@ typedef struct animation_definition {
 } Animation_Definition;
 
 typedef struct animation {
-	Animation_Definition *definition;
+	usize animation_definition_id;
 	f32 current_frame_time;
 	u8 current_frame_index;
 	bool does_loop;
