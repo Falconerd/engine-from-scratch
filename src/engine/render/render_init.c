@@ -64,6 +64,12 @@ void render_init_shaders(u32 *shader_default, u32 *shader_batch, f32 render_widt
 		GL_FALSE,
 		&projection[0][0]
 	);
+
+    for (u32 i = 0; i < 8; ++i) {
+        char name[] = "texture_slot_N";
+        sprintf(name, "texture_slot_%u", i);
+        glUniform1i(glGetUniformLocation(*shader_batch, name), i);
+    }
 }
 
 void render_init_color_texture(u32 *texture) {
@@ -146,13 +152,15 @@ void render_init_batch_quads(u32 *vao, u32 *vbo, u32 *ebo) {
 	glBindBuffer(GL_ARRAY_BUFFER, *vbo);
 	glBufferData(GL_ARRAY_BUFFER, MAX_BATCH_VERTICES * sizeof(Batch_Vertex), NULL, GL_DYNAMIC_DRAW);
 
-	// [x, y], [u, v], [r, g, b, a]
+	// [x, y], [u, v], [r, g, b, a], [texture_slot]
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Batch_Vertex), (void*)offsetof(Batch_Vertex, position));
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Batch_Vertex), (void*)offsetof(Batch_Vertex, uvs));
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(Batch_Vertex), (void*)offsetof(Batch_Vertex, color));
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(Batch_Vertex), (void*)offsetof(Batch_Vertex, texture_slot));
 
 	glGenBuffers(1, ebo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *ebo);

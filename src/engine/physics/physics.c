@@ -362,3 +362,6 @@ Static_Body *physics_static_body_get(usize index) {
 	return array_list_get(state.static_body_list, index);
 }
 
+usize physics_static_body_count() {
+    return state.static_body_list->len;
+}

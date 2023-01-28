@@ -8,11 +8,12 @@ Array_List *animation_definition_storage;
 Array_List *animation_storage;
 
 void animation_init(void) {
+    // TODO: BUG WITH ARRAY_LIST IMPLEMENTATION CAUSES CREATED WITH 0 LENGTH TO NOT WORK
 	animation_definition_storage = array_list_create(sizeof(Animation_Definition), 0);
 	animation_storage = array_list_create(sizeof(Animation), 0);
 }
 
-usize animation_definition_create(Sprite_Sheet *sprite_sheet, f32 *durations, u8 *rows, u8 *columns, u8 frame_count) {
+usize animation_definition_create(Sprite_Sheet *sprite_sheet, f32 duration, u8 row, u8 *columns, u8 frame_count) {
 	assert(frame_count <= MAX_FRAMES);
 
 	Animation_Definition def = {0};
@@ -23,8 +24,8 @@ usize animation_definition_create(Sprite_Sheet *sprite_sheet, f32 *durations, u8
 	for (u8 i = 0; i < frame_count; ++i) {
 		def.frames[i] = (Animation_Frame){
 			.column = columns[i],
-			.row = rows[i],
-			.duration = durations[i],
+			.row = row,
+			.duration = duration,
 		};
 	}
 
@@ -93,5 +94,11 @@ void animation_update(f32 dt) {
 			animation->current_frame_time = adef->frames[animation->current_frame_index].duration;
 		}
 	}
+}
+
+void animation_render(Animation *animation, vec2 position, vec4 color, u32 texture_slots[8]) {
+    Animation_Definition *adef = animation->definition;
+    Animation_Frame *aframe = &adef->frames[animation->current_frame_index];
+    render_sprite_sheet_frame(adef->sprite_sheet, aframe->row, aframe->column, position, animation->is_flipped, WHITE, texture_slots);
 }
 

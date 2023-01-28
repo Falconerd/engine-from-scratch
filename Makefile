@@ -8,11 +8,9 @@ array_list=src/engine/array_list/array_list.c
 entity=src/engine/entity/entity.c
 animation=src/engine/animation/animation.c
 audio=src/engine/audio/audio.c
-files=src/glad.c src/main.c src/engine/global.c $(render) $(io) $(config) $(input) $(time) $(physics) $(array_list) $(entity) $(animation) $(audio)
+files=deps/src/glad.c src/main.c src/engine/global.c $(render) $(io) $(config) $(input) $(time) $(physics) $(array_list) $(entity) $(animation) $(audio)
 
-libs=-lm `sdl2-config --cflags --libs` -lSDL2_mixer
-
-#CL /Zi /I W:/include $(files) /link $(libs) /OUT:mygame.exe
+libs=-lm `sdl2-config --cflags --libs` -lSDL2_mixer `pkg-config --libs glfw3` -ldl
 
 build:
-	gcc -g3 $(files) $(libs) -o mygame.out
+	gcc -g3 -O0 -I./deps/include $(files) $(libs) -o mygame.out

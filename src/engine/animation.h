@@ -26,8 +26,9 @@ typedef struct animation {
 } Animation;
 
 void animation_init(void);
-usize animation_definition_create(Sprite_Sheet *sprite_sheet, f32 *durations, u8 *rows, u8 *columns, u8 frame_count);
+usize animation_definition_create(Sprite_Sheet *sprite_sheet, f32 duration, u8 row, u8 *columns, u8 frame_count);
 usize animation_create(usize animation_definition_id, bool does_loop);
 void animation_destroy(usize id);
 Animation *animation_get(usize id);
 void animation_update(f32 dt);
+void animation_render(Animation *animation, vec2 position, vec4 color, u32 texture_slots[8]);
