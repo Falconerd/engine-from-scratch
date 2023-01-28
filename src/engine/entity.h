@@ -12,6 +12,7 @@ typedef struct entity {
     vec2 sprite_offset;
 	bool is_active;
     bool is_enraged;
+    u8 health;
 } Entity;
 
 void entity_init(void);
@@ -22,6 +23,7 @@ void entity_reset(void);
 Entity *entity_by_body_id(usize body_id);
 usize entity_id_by_body_id(usize body_id);
 
-void entity_damage(usize entity_id, u8 amount);
+// Returns true if the enemy dies.
+bool entity_damage(usize entity_id, u8 amount);
 void entity_destroy(usize entity_id);
 

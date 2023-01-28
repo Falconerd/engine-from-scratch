@@ -22,6 +22,11 @@ void reset(void);
 
 static Mix_Music *MUSIC_STAGE_1;
 static Mix_Chunk *SOUND_JUMP;
+static Mix_Chunk *SOUND_SHOOT;
+static Mix_Chunk *SOUND_BULLET_HIT_WALL;
+static Mix_Chunk *SOUND_HURT;
+static Mix_Chunk *SOUND_ENEMY_DEATH;
+static Mix_Chunk *SOUND_PLAYER_DEATH;
 
 static const f32 GROUNDED_TIME = 0.1f;
 static const f32 SPEED_PLAYER = 250;
@@ -39,10 +44,39 @@ typedef enum collision_layer {
     COLLISION_LAYER_PROJECTILE = 1 << 4,
 } Collision_Layer;
 
+typedef enum weapon_type {
+    WEAPON_TYPE_SHOTGUN,
+    WEAPON_TYPE_PISTOL,
+    WEAPON_TYPE_REVOLVER,
+    WEAPON_TYPE_SMG,
+    WEAPON_TYPE_ROCKET_LAUNCHER,
+    WEAPON_TYPE_COUNT,
+} Weapon_Type;
+
+typedef enum projectile_type {
+    PROJECTILE_TYPE_SMALL,
+    PROJECTILE_TYPE_LARGE,
+    PROJECTILE_TYPE_ROCKET,
+} Projectile_Type;
+
+typedef struct weapon {
+    f32 fire_rate; // Time between shots.
+    f32 recoil;
+    f32 projectile_speed;
+    Projectile_Type projectile_type;
+    vec2 sprite_size;
+    vec2 sprite_offset;
+    usize projectile_animation_id;
+    Mix_Chunk *sfx;
+} Weapon;
+
+static Weapon weapons[WEAPON_TYPE_COUNT] = {0};
+
 static f32 render_width;
 static f32 render_height;
 static u32 texture_slots[8] = {0};
 
+static Weapon_Type weapon_type = WEAPON_TYPE_PISTOL;
 static bool should_quit = false;
 static bool player_is_grounded = false;
 static usize anim_player_walk_id;
@@ -52,6 +86,7 @@ static usize anim_enemy_large_id;
 static usize anim_enemy_small_enraged_id;
 static usize anim_enemy_large_enraged_id;
 static usize anim_fire_id;
+static usize anim_projectile_small_id;
 
 static usize player_id;
 
@@ -63,6 +98,39 @@ static u8 enemy_mask = COLLISION_LAYER_PLAYER | COLLISION_LAYER_TERRAIN;
 static u8 player_mask = COLLISION_LAYER_ENEMY | COLLISION_LAYER_TERRAIN | COLLISION_LAYER_ENEMY_PASSTHROUGH;
 static u8 fire_mask = COLLISION_LAYER_ENEMY | COLLISION_LAYER_PLAYER;
 static u8 projectile_mask = COLLISION_LAYER_ENEMY | COLLISION_LAYER_TERRAIN;
+
+void projectile_on_hit(Body *self, Body *other, Hit hit) {
+	if (other->collision_layer == COLLISION_LAYER_ENEMY) {
+        Entity *projectile = entity_get(self->entity_id);
+        Entity *enemy = entity_get(other->entity_id);
+        if (projectile->animation_id == anim_projectile_small_id) {
+            if (entity_damage(other->entity_id, 1)) {
+                audio_sound_play(SOUND_ENEMY_DEATH);
+            }
+        }
+        audio_sound_play(SOUND_HURT);
+	}
+}
+
+void projectile_on_hit_static(Body *self, Static_Body *other, Hit hit) {
+        Entity *projectile = entity_get(self->entity_id);
+        if (projectile->animation_id == anim_projectile_small_id) {
+            audio_sound_play(SOUND_SHOOT);
+        }
+        entity_destroy(self->entity_id);
+}
+
+static void spawn_projectile(Projectile_Type projectile_type) {
+    Weapon weapon = weapons[weapon_type];
+    Entity *player = entity_get(player_id);
+    Body *body = physics_body_get(player->body_id);
+    Animation *animation = animation_get(player->animation_id);
+    bool is_flipped = animation->is_flipped;
+    vec2 velocity = {is_flipped ? -weapon.projectile_speed : weapon.projectile_speed, 0};
+
+    entity_create(body->aabb.position, weapon.sprite_size, weapon.sprite_offset, velocity, COLLISION_LAYER_PROJECTILE, projectile_mask, true, weapon.projectile_animation_id, projectile_on_hit, projectile_on_hit_static);
+    audio_sound_play(weapon.sfx);
+}
 
 static void input_handle(Body *body_player) {
 	if (global.input.escape) {
@@ -95,6 +163,12 @@ static void input_handle(Body *body_player) {
 
 	body_player->velocity[0] = velx;
 	body_player->velocity[1] = vely;
+
+    if (global.input.shoot && shoot_timer <= 0) {
+        Weapon weapon = weapons[weapon_type];
+        shoot_timer = weapon.fire_rate;
+        spawn_projectile(weapon.projectile_type);
+    }
 }
 
 void player_on_hit(Body *self, Body *other, Hit hit) {
@@ -185,8 +259,7 @@ void fire_on_hit(Body *self, Body *other, Hit hit) {
             bool is_small = enemy->animation_id == anim_enemy_small_id || enemy->animation_id == anim_enemy_small_enraged_id;
             bool is_flipped = rand() % 100 >= 50;
             spawn_enemy(is_small, true, is_flipped);
-            enemy->is_active = false;
-            other->is_active = false;
+            entity_destroy(other->entity_id);
         }
 	} else if (other->collision_layer == COLLISION_LAYER_PLAYER) {
         reset();
@@ -237,6 +310,11 @@ int main(int argc, char *argv[]) {
 	audio_init();
 
 	audio_sound_load(&SOUND_JUMP, "assets/jump.wav");
+	audio_sound_load(&SOUND_SHOOT, "assets/shoot.wav");
+	audio_sound_load(&SOUND_BULLET_HIT_WALL, "assets/bullet_hit_wall.wav");
+	audio_sound_load(&SOUND_HURT, "assets/hurt.wav");
+	audio_sound_load(&SOUND_ENEMY_DEATH, "assets/enemy_death.wav");
+	audio_sound_load(&SOUND_PLAYER_DEATH, "assets/player_death.wav");
 	audio_music_load(&MUSIC_STAGE_1, "assets/breezys_mega_quest_2_stage_1.mp3");
 
 	i32 window_width, window_height;
@@ -274,6 +352,21 @@ int main(int argc, char *argv[]) {
     usize adef_fire_id = animation_definition_create(&sprite_sheet_fire, 0.1, 0, (u8[]){0, 1, 2, 3, 4, 5, 6, 7}, 7);
     anim_fire_id = animation_create(adef_fire_id, true);
 
+    usize adef_projectile_small_id = animation_definition_create(&sprite_sheet_props, 1, 0, (u8[]){0}, 1);
+    anim_projectile_small_id = animation_create(adef_projectile_small_id, false);
+
+    // Init weapons.
+    weapons[WEAPON_TYPE_PISTOL] = (Weapon){
+        .projectile_type = PROJECTILE_TYPE_SMALL,
+            .projectile_speed = 200,
+            .fire_rate = 0.1,
+            .recoil = 2.0,
+            .projectile_animation_id = anim_projectile_small_id,
+            .sprite_size = {16, 16},
+            .sprite_offset = {0, 0},
+            .sfx = SOUND_SHOOT
+    };
+
     reset();
 
 	while (!should_quit) {
@@ -290,6 +383,10 @@ int main(int argc, char *argv[]) {
 				break;
 			}
 		}
+
+        shoot_timer -= global.time.delta;
+        spawn_timer -= global.time.delta;
+        ground_timer -= global.time.delta;
 
 		Entity *player = entity_get(player_id);
 		Body *body_player = physics_body_get(player->body_id);
@@ -308,7 +405,6 @@ int main(int argc, char *argv[]) {
 
 		// Spawn enemies.
 		{
-			spawn_timer -= global.time.delta;
 			if (spawn_timer <= 0) {
 				spawn_timer = (f32)((rand() % 200) + 200) / 100.f;
 

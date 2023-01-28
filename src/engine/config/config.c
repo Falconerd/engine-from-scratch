@@ -47,7 +47,7 @@ static void load_controls(const char *config_buffer) {
 	config_key_bind(INPUT_KEY_LEFT, config_get_value(config_buffer, "left"));
 	config_key_bind(INPUT_KEY_RIGHT, config_get_value(config_buffer, "right"));
 	config_key_bind(INPUT_KEY_UP, config_get_value(config_buffer, "up"));
-	config_key_bind(INPUT_KEY_DOWN, config_get_value(config_buffer, "down"));
+	config_key_bind(INPUT_KEY_SHOOT, config_get_value(config_buffer, "shoot"));
 	config_key_bind(INPUT_KEY_ESCAPE, config_get_value(config_buffer, "escape"));
 }
 
