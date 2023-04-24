@@ -14,8 +14,10 @@ Array_List *array_list_create(usize item_size, usize initial_capacity) {
     list->len = 0;
     list->items = malloc(item_size * initial_capacity);
 
-    if (!list->items)
+    if (!list->items) {
+	    free(list);
 	    ERROR_RETURN(NULL, "Could not allocate memory for Array_List\n");
+    }
 
     return list;
 }
