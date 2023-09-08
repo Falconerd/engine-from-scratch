@@ -6,3 +6,4 @@
 *.o
 *.out
 .vs/
+.vscode/
