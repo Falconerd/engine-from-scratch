@@ -176,13 +176,13 @@ static void input_handle(Entity *player, Body *body_player) {
         shoot_timer = weapon.fire_rate;
 
         switch (weapon_type) {
-        case WEAPON_TYPE_SHOTGUN:
+        case WEAPON_TYPE_SHOTGUN: {
             f32 angle = 20.0f;
             for (int i = 0; i < 7; ++i) {
                 angle -= 5.0f;
                 spawn_projectile(weapon.projectile_type, angle, 0.2f);
             }
-            break;
+        } break;
         default:
             spawn_projectile(weapon.projectile_type, 0, 0);
         }
