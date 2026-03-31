@@ -38,10 +38,12 @@ static char *config_get_value(const char *config_buffer, const char *value) {
 	while (*curr == ' ')
 		++curr;
 	// Get characters until end of line.
-	while (*curr != '\n' && *curr != 0 && curr != end)
+	// FIX: \r\n on Windows
+	while (*curr != '\r' && *curr != '\n' && *curr != 0 && curr != end)
 		*tmp_ptr++ = *curr++;
 
-	*(tmp_ptr+1) = 0;
+	// FIX: was off by one
+	*(tmp_ptr) = 0;
 
 	return tmp_buffer;
 }

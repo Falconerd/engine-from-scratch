@@ -49,3 +49,19 @@ usize entity_count() {
 void entity_reset(void) {
     entity_list->len = 0;
 }
+
+bool entity_damage(usize entity_id, u8 amount) {
+	Entity *entity = entity_get(entity_id);
+	entity->health -= amount;
+	if (entity->health <= 0) {
+		entity_destroy(entity_id);
+		return true;
+	}
+	return false;
+}
+
+void entity_destroy(usize entity_id) {
+	Entity *entity = entity_get(entity_id);
+	physics_body_destroy(entity->body_id);
+	entity->is_active = false;
+}

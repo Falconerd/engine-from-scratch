@@ -9,9 +9,12 @@
 typedef struct entity {
 	usize body_id;
 	usize animation_id;
-    vec2 sprite_offset;
+	vec2 sprite_offset;
+	f32 lifetime;
 	bool is_active;
-    bool is_enraged;
+	bool is_enraged;
+	bool is_flipped;
+	u8 health;
 } Entity;
 
 void entity_init(void);
@@ -22,6 +25,6 @@ void entity_reset(void);
 Entity *entity_by_body_id(usize body_id);
 usize entity_id_by_body_id(usize body_id);
 
-void entity_damage(usize entity_id, u8 amount);
+bool entity_damage(usize entity_id, u8 amount);
 void entity_destroy(usize entity_id);
 

@@ -3,6 +3,8 @@
 *.ilk
 *.pdb
 *.obj
+*.exp
+mygame.lib
 *.o
 *.out
 .vs/
