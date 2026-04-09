@@ -15,3 +15,14 @@ typedef float   f32;
 typedef double  f64;
 typedef size_t usize;
 
+struct Handle {
+  u32 index;
+  u32 generation;
+};
+
+typedef struct Handle Handle;
+typedef struct Handle Entity_Handle;
+typedef struct Handle Body_Handle;
+typedef struct Handle Static_Body_Handle;
+typedef struct Handle Trigger_Handle;
+

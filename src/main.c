@@ -125,7 +125,7 @@ f32 rand_f32_range(f32 min, f32 max) {
 
 void projectile_on_hit(Body *self, Body *other, Hit hit) {
 	if (other->collision_layer == COLLISION_LAYER_ENEMY) {
-		if (entity_damage(other->entity_id, 1)) {
+		if (entity_damage(other->entity, 1)) {
 			audio_sound_play(SOUND_ENEMY_DEATH);
 		}
 		audio_sound_play(SOUND_HURT);
@@ -134,12 +134,12 @@ void projectile_on_hit(Body *self, Body *other, Hit hit) {
 
 void projectile_on_hit_static(Body *self, Static_Body *other, Hit hit) {
 	audio_sound_play(SOUND_BULLET_HIT_WALL);
-	entity_destroy(self->entity_id);
+	entity_destroy(self->entity);
 }
 
 void revolver_on_hit(Body *self, Body *other, Hit hit) {
 	if (other->collision_layer == COLLISION_LAYER_ENEMY) {
-		if (entity_damage(other->entity_id, 3)) {
+		if (entity_damage(other->entity, 3)) {
 			audio_sound_play(SOUND_ENEMY_DEATH);
 		}
 		audio_sound_play(SOUND_HURT);
@@ -584,8 +584,8 @@ int main(int argc, char *argv[]) {
         // Debug render bounding boxes.
         {
             for (usize i = 0; i < entity_count(); ++i) {
-                Entity *entity = entity_get(i);
-                Body *body = physics_body_get(entity->body_id);
+                Entity *entity = entity_get_by_index(i);
+                Body *body = physics_body_get(entity->body);
 
                 if (body->is_active) {
                     render_aabb((f32*)body, TURQUOISE);
@@ -595,13 +595,13 @@ int main(int argc, char *argv[]) {
             }
 
             for (usize i = 0; i < physics_static_body_count(); ++i) {
-                render_aabb((f32*)physics_static_body_get(i), WHITE);
+                render_aabb((f32*)physics_static_body_get_by_index(i), WHITE);
             }
         }
 
 		// Render animated entities...
 		for (usize i = 0; i < entity_count(); ++i) {
-			Entity *entity = entity_get(i);
+			Entity *entity = entity_get_by_index(i);
 			if (!entity->is_active || entity->animation_id == (usize)-1) {
 				continue;
 			}
@@ -609,12 +609,12 @@ int main(int argc, char *argv[]) {
 			if (entity->lifetime > 0) {
 				entity->lifetime -= global.time.delta;
 				if (entity->lifetime <= 0) {
-					entity_destroy(i);
+					entity_destroy_by_index(i);
 					continue;
 				}
 			}
 
-			Body *body = physics_body_get(entity->body_id);
+			Body *body = physics_body_get(entity->body);
 			Animation *anim = animation_get(entity->animation_id);
 
 			vec2 pos;
@@ -624,7 +624,7 @@ int main(int argc, char *argv[]) {
 
 		// Draw weapon.
 		{
-			Body *body = physics_body_get(player->body_id);
+			Body *body = physics_body_get(player->body);
 			Weapon weapon = weapons[weapon_type];
 			vec2 offset = {
 				player->is_flipped ? weapon.sprite_flipped_offset_x : weapon.sprite_offset[0],

@@ -4,12 +4,12 @@
 #include <linmath.h>
 #include "physics.h"
 #include "types.h"
-#include "render.h"
 
 typedef struct entity {
-	usize body_id;
+	Body_Handle body;
 	usize animation_id;
 	vec2 sprite_offset;
+	u32 generation;
 	f32 lifetime;
 	bool is_active;
 	bool is_enraged;
@@ -18,13 +18,15 @@ typedef struct entity {
 } Entity;
 
 void entity_init(void);
-usize entity_create(vec2 position, vec2 size, vec2 sprite_offset, vec2 velocity, u8 collision_layer, u8 collision_mask, bool is_kinematic, usize animation_id, On_Hit on_hit, On_Hit_Static on_hit_static);
-Entity *entity_get(usize id);
+Entity_Handle entity_create(vec2 position, vec2 size, vec2 sprite_offset, vec2 velocity, u8 collision_layer, u8 collision_mask, bool is_kinematic, usize animation_id, On_Hit on_hit, On_Hit_Static on_hit_static);
+Entity *entity_get(Entity_Handle handle);
 usize entity_count(void);
 void entity_reset(void);
-Entity *entity_by_body_id(usize body_id);
-usize entity_id_by_body_id(usize body_id);
+Entity *entity_by_body(Body_Handle handle);
+usize entity_id_by_body(Body_Handle handle);
 
-bool entity_damage(usize entity_id, u8 amount);
-void entity_destroy(usize entity_id);
+bool entity_damage(Entity_Handle handle, u8 amount);
+void entity_destroy(Entity_Handle handle);
 
+Entity *entity_get_by_index(usize i);
+void entity_destroy_by_index(usize i);

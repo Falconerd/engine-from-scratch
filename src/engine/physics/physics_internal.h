@@ -8,5 +8,6 @@ typedef struct physics_state_internal {
 	f32 terminal_velocity;
 	Array_List *body_list;
 	Array_List *static_body_list;
+	Array_List *event_list;
 } Physics_State_Internal;
 
