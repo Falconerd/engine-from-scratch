@@ -5,8 +5,6 @@ __declspec(dllexport) unsigned long NvOptimusEnablement = 1;
 __declspec(dllexport) unsigned long AmdPowerXpressRequestHighPerformance = 1;
 #endif
 
-#include <math.h>
-
 #include <stdlib.h>
 #include <stdbool.h>
 #include <glad/glad.h>
@@ -105,7 +103,7 @@ static usize anim_projectile_large_id;
 static usize anim_projectile_rocket_id;
 static usize anim_crate_id;
 
-static usize player_id;
+static Entity_Handle player_handle;
 
 static f32 ground_timer = 0;
 static f32 shoot_timer = 0;
@@ -148,25 +146,25 @@ void revolver_on_hit(Body *self, Body *other, Hit hit) {
 
 void rocket_on_hit(Body *self, Body *other, Hit hit) {
 	audio_sound_play(SOUND_EXPLOSION);
-	entity_destroy(self->entity_id);
+	entity_destroy(self->entity);
 	// TODO: AOE Damage, Circle Shader
 }
 
 void rocket_on_hit_static(Body *self, Static_Body *other, Hit hit) {
 	audio_sound_play(SOUND_EXPLOSION);
-	entity_destroy(self->entity_id);
+	entity_destroy(self->entity);
 }
 
 static void spawn_projectile(Projectile_Type projectile_type, f32 vx, f32 vy, f32 lifetime, On_Hit on_hit, On_Hit_Static on_hit_static) {
 	Weapon weapon = weapons[weapon_type];
-	Entity *player = entity_get(player_id);
-	Body *body = physics_body_get(player->body_id);
+	Entity *player = entity_get(player_handle);
+	Body *body = physics_body_get(player->body);
 	Animation *animation = animation_get(player->animation_id);
 	bool is_flipped = player->is_flipped;
 	vec2 velocity = {is_flipped ? -vx : vx, vy};
 
-	usize projectile_entity_id = entity_create(body->aabb.position, weapon.sprite_size, (vec2){0}, velocity, COLLISION_LAYER_PROJECTILE, projectile_mask, true, weapon.projectile_animation_id, on_hit, on_hit_static);
-	Entity *projectile = entity_get(projectile_entity_id);
+	Entity_Handle projectile_entity = entity_create(body->aabb.position, weapon.sprite_size, (vec2){0}, velocity, COLLISION_LAYER_PROJECTILE, projectile_mask, true, weapon.projectile_animation_id, on_hit, on_hit_static);
+	Entity *projectile = entity_get(projectile_entity);
 
 	projectile->lifetime = lifetime;
 }
@@ -182,7 +180,7 @@ static void input_handle(Body *body_player) {
 	f32 velx = 0;
 	f32 vely = body_player->velocity[1];
 
-	Entity *player = entity_get(player_id);
+	Entity *player = entity_get(player_handle);
 
 	if (global.input.right) {
 		velx += SPEED_PLAYER;
@@ -252,7 +250,7 @@ void player_on_hit_static(Body *self, Static_Body *other, Hit hit) {
 }
 
 void enemy_small_on_hit_static(Body *self, Static_Body *other, Hit hit) {
-  Entity *entity = entity_get(self->entity_id);
+  Entity *entity = entity_get(self->entity);
 
 	if (hit.normal[0] > 0) {
 	  entity->is_flipped = false;
@@ -274,7 +272,7 @@ void enemy_small_on_hit_static(Body *self, Static_Body *other, Hit hit) {
 }
 
 void enemy_large_on_hit_static(Body *self, Static_Body *other, Hit hit) {
-  Entity *entity = entity_get(self->entity_id);
+  Entity *entity = entity_get(self->entity);
 
 	if (hit.normal[0] > 0) {
 	  entity->is_flipped = false;
@@ -320,8 +318,8 @@ void spawn_enemy(bool is_small, bool is_enraged, bool is_flipped) {
     }
 
     vec2 velocity = {is_flipped ? -speed : speed, 0};
-    usize id = entity_create(position, size, sprite_offset, velocity, COLLISION_LAYER_ENEMY, enemy_mask, false, animation_id, NULL, on_hit_static);
-    Entity *entity = entity_get(id);
+    Entity_Handle handle = entity_create(position, size, sprite_offset, velocity, COLLISION_LAYER_ENEMY, enemy_mask, false, animation_id, NULL, on_hit_static);
+    Entity *entity = entity_get(handle);
     entity->is_enraged = is_enraged;
     entity->is_flipped = is_flipped;
     entity->health = is_small ? HEALTH_ENEMY_SMALL : HEALTH_ENEMY_LARGE;
@@ -330,11 +328,11 @@ void spawn_enemy(bool is_small, bool is_enraged, bool is_flipped) {
 void fire_on_hit(Body *self, Body *other, Hit hit) {
 	if (other->collision_layer == COLLISION_LAYER_ENEMY) {
     if (other->is_active) {
-      Entity *enemy = entity_get(other->entity_id);
+      Entity *enemy = entity_get(other->entity);
       bool is_small = enemy->animation_id == anim_enemy_small_id || enemy->animation_id == anim_enemy_small_enraged_id;
       bool is_flipped = rand() % 100 >= 50;
       spawn_enemy(is_small, true, is_flipped);
-      entity_destroy(other->entity_id);
+      entity_destroy(other->entity);
     }
 	} else if (other->collision_layer == COLLISION_LAYER_PLAYER) {
     reset();
@@ -351,7 +349,7 @@ void reset(void) {
   spawn_timer = 0;
   shoot_timer = 0;
 
-	player_id = entity_create((vec2){100, 200}, (vec2){24, 24}, (vec2){0, 0}, (vec2){0, 0}, COLLISION_LAYER_PLAYER, player_mask, false, (usize)-1, player_on_hit, player_on_hit_static);
+	player_handle = entity_create((vec2){100, 200}, (vec2){24, 24}, (vec2){0, 0}, (vec2){0, 0}, COLLISION_LAYER_PLAYER, player_mask, false, (usize)-1, player_on_hit, player_on_hit_static);
 
     // Init level.
 	{
@@ -546,8 +544,8 @@ int main(int argc, char *argv[]) {
 
 		weapon_kick -= 1000 * global.time.delta;
 
-		Entity *player = entity_get(player_id);
-		Body *body_player = physics_body_get(player->body_id);
+		Entity *player = entity_get(player_handle);
+		Body *body_player = physics_body_get(player->body);
 
 		if (body_player->velocity[0] != 0) {
       player->animation_id = anim_player_walk_id;
@@ -557,7 +555,19 @@ int main(int argc, char *argv[]) {
 
 		input_update();
 		input_handle(body_player);
-		physics_update();
+		Array_List physics_events = physics_update();
+
+		// Handle physics events
+		for (usize i = 0; i < physics_events.len; i += 1) {
+			Physics_Event *event = (Physics_Event *)physics_events.items + i;
+
+			switch (event->kind) {
+			case PHYSICS_EVENT_HIT_BODY: {} break;
+			case PHYSICS_EVENT_HIT_STATIC: {} break;
+			}
+		}
+
+		physics_events_clear();
 
 		animation_update(global.time.delta);
 
@@ -572,9 +582,13 @@ int main(int argc, char *argv[]) {
 				bool is_small = rand() % 100 > 18;
 
 				f32 spawn_x = is_flipped ? 540 : 100;
-        spawn_enemy(is_small, false, is_flipped);
+		        spawn_enemy(is_small, false, is_flipped);
 			}
 		}
+
+		// NOTE: If enemies spawn, that can realloc the entity list, which then
+		// invalidates the player pointer.
+		player = entity_get(player_handle);
 
 		render_begin();
 
@@ -585,7 +599,9 @@ int main(int argc, char *argv[]) {
         {
             for (usize i = 0; i < entity_count(); ++i) {
                 Entity *entity = entity_get_by_index(i);
-                Body *body = physics_body_get(entity->body);
+                // NOTE: Get by index because generation is invalidated on
+                // body destroy, but this code draws inactive boxes
+                Body *body = physics_body_get_by_index(entity->body.index);
 
                 if (body->is_active) {
                     render_aabb((f32*)body, TURQUOISE);
@@ -623,8 +639,12 @@ int main(int argc, char *argv[]) {
 		}
 
 		// Draw weapon.
-		{
+		do {
 			Body *body = physics_body_get(player->body);
+			if (!body) {
+				printf("Player has no body at time: %f\n", global.time.now);
+				break;
+			}
 			Weapon weapon = weapons[weapon_type];
 			vec2 offset = {
 				player->is_flipped ? weapon.sprite_flipped_offset_x : weapon.sprite_offset[0],
@@ -635,7 +655,7 @@ int main(int argc, char *argv[]) {
 			vec2_add(pos, body->aabb.position, offset);
 			vec2_add(pos, pos, body->aabb.half_size);
 			render_sprite_sheet_frame(&sprite_sheet_weapons, weapon.sprite_coords[0], weapon.sprite_coords[1], pos, player->is_flipped, WHITE, texture_slots);
-		}
+		} while (0);
 
 		render_end(window, texture_slots);
 

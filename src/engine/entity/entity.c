@@ -66,6 +66,7 @@ void entity_destroy(Entity_Handle handle) {
 	Entity *entity = entity_get(handle);
 	if (!entity) return;
 	physics_body_destroy(entity->body);
+	entity->generation += 1;
 	entity->is_active = false;
 }
 

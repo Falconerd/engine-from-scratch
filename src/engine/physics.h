@@ -75,4 +75,6 @@ void aabb_min_max(vec2 min, vec2 max, AABB aabb);
 Hit ray_intersect_aabb(vec2 position, vec2 magnitude, AABB aabb);
 void physics_reset(void);
 
+Body *physics_body_get_by_index(usize i);
 Static_Body *physics_static_body_get_by_index(usize i);
+void physics_events_clear(void);

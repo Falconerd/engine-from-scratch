@@ -29,6 +29,12 @@ usize animation_definition_create(Sprite_Sheet *sprite_sheet, f32 duration, u8 r
 		};
 	}
 
+	printf("Animation Definition (%zu): Texture ID: %d, Frames: %d\n",
+	    animation_definition_storage->len,
+	    sprite_sheet->texture_id,
+	    frame_count
+	);
+
 	return array_list_append(animation_definition_storage, &def);
 }
 

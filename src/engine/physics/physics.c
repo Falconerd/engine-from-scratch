@@ -428,6 +428,18 @@ void physics_body_destroy(Body_Handle handle) {
 	body->generation += 1;
 }
 
+Body *physics_body_get_by_index(usize i) {
+	return (Body *)array_list_get(state.body_list, i);
+}
+
 Static_Body *physics_static_body_get_by_index(usize i) {
 	return (Static_Body *)array_list_get(state.static_body_list, i);
+}
+
+void physics_events_clear(void) {
+	state.event_list->len = 0;
+}
+
+Physics_State_Internal *physics_state_internal(void) {
+	return &state;
 }
